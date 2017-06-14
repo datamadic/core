@@ -122,9 +122,18 @@ function AuthorizationApiHandler() {
             ExternalApplication.addExternalConnection(externalConnObj);
             socketServer.connectionAuthenticated(id, uuid);
 
-            rvmMessageBus.registerLicenseInfo({
-                licenseKey: externalConnObj.licenseKey,
-                client: externalConnObj.client
+            rvmMessageBus.publish({
+                topic: 'application-event',
+                type: 'started',
+                sourceUrl: null,
+                data: {
+                    licenseKey: externalConnObj.licenseKey,
+                    client: externalConnObj.client,
+                    uuid,
+                    parentApp: {
+                        uuid: null
+                    }
+                }
             });
 
             if (!success) {
