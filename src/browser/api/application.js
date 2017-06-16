@@ -495,10 +495,13 @@ Application.run = function(identity, configUrl = '') {
             }
         };
     };
-    const appEventsForRVM = ['started', 'closed', 'ready', 'run-requested', 'crashed', 'error', 'not-responding', 'out-of-memory'];
+    const appEventsForRVM = ['closed', 'ready', 'run-requested', 'crashed', 'error', 'not-responding', 'out-of-memory'];
+    const appStartedHandler = () => {
+        rvmBus.registerLicenseInfo({ data: genLicensePayload() }, sourceUrl);
+    };
     const sendAppsEventsToRVMListener = (appEvent) => {
 
-        if (!sourceUrl && appEvent.type !== 'started') {
+        if (!sourceUrl) {
             return; // Most likely an adapter, RVM can't do anything with what it didn't load(determined by sourceUrl) so ignore
         }
 
@@ -525,9 +528,6 @@ Application.run = function(identity, configUrl = '') {
 
                     rvmPayload.isClosing = coreState.shouldCloseRuntime([uuid]);
                 }
-                break;
-            case 'started':
-                rvmPayload.data = genLicensePayload();
                 break;
 
             default:
@@ -557,6 +557,7 @@ Application.run = function(identity, configUrl = '') {
 
     // Set up RVM related listeners for events the RVM cares about
     ofEvents.on(hideSplashTopic, hideSplashListener);
+    ofEvents.on(route.application('started', uuid), appStartedHandler);
     appEventsForRVM.forEach(appEvent => {
         ofEvents.on(route.application(appEvent, uuid), sendAppsEventsToRVMListener);
     });
@@ -615,6 +616,7 @@ Application.run = function(identity, configUrl = '') {
         appEventsForRVM.forEach(appEvent => {
             ofEvents.removeListener(route.application(appEvent, uuid), sendAppsEventsToRVMListener);
         });
+        ofEvents.removeListener(route.application('started', uuid), appStartedHandler);
 
         coreState.removeApp(app.id);
 
