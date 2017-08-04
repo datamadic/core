@@ -45,6 +45,7 @@ module.exports.applicationApiMap = {
     'get-application-manifest': getApplicationManifest,
     'get-child-windows': getChildWindows,
     'get-config-url': getConfigUrl,
+    'get-crash-reporter-state': getCrashReporterState,
     'get-info': getInfo,
     'get-parent-application': getParentApplication,
     'get-shortcuts': getShortcuts,
@@ -74,6 +75,12 @@ function startCrashReporter(identity, message, ack) {
     let dataAck = _.clone(successAck);
     const { payload } = message;
     dataAck.data = Application.startCrashReporter(payload);
+    ack(dataAck);
+}
+
+function getCrashReporterState(identity, message, ack) {
+    let dataAck = _.clone(successAck);
+    dataAck.data = Application.getCrashReporterState();
     ack(dataAck);
 }
 

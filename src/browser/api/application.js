@@ -828,9 +828,16 @@ Application.getConfigUrl = function(identity) {
 };
 
 Application.startCrashReporter = function(options) {
-    //TODO validate options
+    //TODO validate options?
     return crashReporter.start(options);
 };
+
+Application.getCrashReporterState = function() {
+    //TODO should this be in system on the browser side??
+    return crashReporter.crashReporterState();
+};
+
+
 
 Application.terminate = function(identity, callback) {
     Application.close(identity, true, callback);
