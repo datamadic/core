@@ -20,6 +20,15 @@ limitations under the License.
  */
 
 declare module 'electron' {
+     namespace crashReporter {
+        export function start(opts: {
+            productName: string;
+            companyName: string;
+            submitURL: string;
+            autoSubmit: boolean;
+        }):void
+    }
+
     namespace app {
         export function log(level: string, message: any): any;
         export function vlog(level: number, message: any): any;

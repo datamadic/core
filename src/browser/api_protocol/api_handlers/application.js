@@ -44,6 +44,7 @@ module.exports.applicationApiMap = {
     'get-application-groups': getApplicationGroups,
     'get-application-manifest': getApplicationManifest,
     'get-child-windows': getChildWindows,
+    'get-config-url': getConfigUrl,
     'get-info': getInfo,
     'get-parent-application': getParentApplication,
     'get-shortcuts': getShortcuts,
@@ -60,6 +61,7 @@ module.exports.applicationApiMap = {
     'run-application': runApplication,
     'set-shortcuts': { apiFunc: setShortcuts, apiPath: '.setShortcuts' },
     'set-tray-icon': setTrayIcon,
+    'start-crash-reporter': startCrashReporter,
     'terminate-application': terminateApplication,
     'wait-for-hung-application': waitForHungApplication
 };
@@ -67,6 +69,21 @@ module.exports.applicationApiMap = {
 module.exports.init = function() {
     apiProtocolBase.registerActionMap(module.exports.applicationApiMap, 'Application');
 };
+
+function startCrashReporter(identity, message, ack) {
+    let dataAck = _.clone(successAck);
+    const { payload } = message;
+    dataAck.data = Application.startCrashReporter(payload);
+    ack(dataAck);
+}
+
+function getConfigUrl(identity, message, ack) {
+    const dataAck = _.clone(successAck);
+
+    dataAck.data = Application.getConfigUrl(identity);
+
+    ack(dataAck);
+}
 
 function setTrayIcon(identity, rawMessage, ack, nack) {
     let message = JSON.parse(JSON.stringify(rawMessage));

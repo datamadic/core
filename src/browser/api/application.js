@@ -53,6 +53,7 @@ import {
 import * as log from '../log';
 let subscriptionManager = new require('../subscription_manager.js').SubscriptionManager();
 import route from '../../common/route';
+import * as crashReporter from '../crash_reporter';
 
 // locals
 const TRAY_ICON_KEY = 'tray-icon-events';
@@ -819,6 +820,16 @@ Application.scheduleRestart = function(identity, callback, errorCallback) {
             errorCallback(new Error('there was an issue sending a message to the RVM'));
         }
     }
+};
+
+Application.getConfigUrl = function(identity) {
+    const { uuid } = identity;
+    return coreState.getConfigUrlByUuid(uuid);
+};
+
+Application.startCrashReporter = function(options) {
+    //TODO validate options
+    return crashReporter.start(options);
 };
 
 Application.terminate = function(identity, callback) {

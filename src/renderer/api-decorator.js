@@ -29,6 +29,7 @@ limitations under the License.
     let glbl = global;
 
     const electron = require('electron');
+
     const webFrame = electron.webFrame.createForRenderFrame(renderFrameId);
     const ipc = electron.ipcRenderer;
 
@@ -43,10 +44,18 @@ limitations under the License.
     };
 
     const windowOptions = getWindowOptionsSync();
+    const configUrl = getConfigUrlSync();
 
     // used by the notification service to emit the ready event
     function emitNoteProxyReady() {
         raiseEventSync('notification-service-ready', true);
+    }
+
+    const crashReporter = global.crashReporter;
+
+    function startOFCrashReporter(options) {
+
+        return crashReporter.startOFCrashReporter(Object.assign({ configUrl }, options));
     }
 
     function syncApiCall(action, payload, singleFrameOnly = true, channel = 'of-window-message') {
@@ -75,6 +84,10 @@ limitations under the License.
             cachedOptions = syncApiCall('get-current-window-options');
         }
         return cachedOptions;
+    }
+
+    function getConfigUrlSync() {
+        return syncApiCall('get-config-url');
     }
 
     function getWindowIdentitySync() {
@@ -516,7 +529,8 @@ limitations under the License.
             createChildWindow: createChildWindow,
             getWindowOptions: getWindowOptionsSync,
             openerSuccessCBCalled: openerSuccessCBCalled,
-            emitNoteProxyReady: emitNoteProxyReady
+            emitNoteProxyReady: emitNoteProxyReady,
+            startOFCrashReporter: startOFCrashReporter
         }
     };
 
