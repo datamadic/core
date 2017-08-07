@@ -389,13 +389,32 @@ function includeFlashPlugin() {
 
 function initializeCrashReporter(argo) {
     const enableCrashReporting = argo['enable-crash-reporting'];
-    const diagnosticMode = argo['diagnostic-mode'];
+    const diagnosticMode = argo['diagnostics'];
     const shouldStartCrashReporter = enableCrashReporting || diagnosticMode;
 
     if (shouldStartCrashReporter) {
         crashReporter.startOFCrashReporter({ diagnosticMode });
+        console.log(crashReporter.crashReporterState());
+    }
+
+    if (argo['crash']) {
+        var a = [];
+        setTimeout(() => {
+            while (1) { a.push(Math.random()); }
+        }, 20000);
     }
 }
+
+
+/**
+ *
+ *
+ *
+var a = [];
+ setTimeout(() => {
+            while (1) { a.push(Math.random()); }
+        }, 100);
+ */
 
 function rotateLogs(argo) {
     // only keep the 7 most recent logfiles

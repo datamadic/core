@@ -35,6 +35,8 @@ let successAck = {
     success: true
 };
 
+import * as log from '../../log';
+
 module.exports.applicationApiMap = {
     'close-application': closeApplication,
     'create-application': createApplication,
@@ -74,13 +76,20 @@ module.exports.init = function() {
 function startCrashReporter(identity, message, ack) {
     let dataAck = _.clone(successAck);
     const { payload } = message;
-    dataAck.data = Application.startCrashReporter(payload);
+    log.writeToLog(1, 'in here ', true);
+    log.writeToLog(1, payload, true);
+    log.writeToLog(1, message, true);
+    dataAck.data = Application.startCrashReporter(identity, payload);
     ack(dataAck);
 }
 
 function getCrashReporterState(identity, message, ack) {
+    log.writeToLog(1, 'waka', true);
+
     let dataAck = _.clone(successAck);
     dataAck.data = Application.getCrashReporterState();
+
+    log.writeToLog(1, dataAck.data + 'waka', true);
     ack(dataAck);
 }
 

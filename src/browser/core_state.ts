@@ -29,6 +29,7 @@ import { app } from 'electron';
 import { ExternalApplication } from './api/external_application';
 import { PortInfo } from './port_discovery';
 import * as Shapes from '../shapes';
+import * as log from './log';
 
 export interface StartManifest {
     data: Shapes.Manifest;
@@ -267,6 +268,20 @@ export function getChildrenByApp(id: number): Shapes.OpenFinWindow[]|void {
     if (!app) {
         console.warn('getChildrenByApp - app not found', arguments);
         return; //throw new Error('getAppObj - app not found');
+    }
+
+    // Only return children who have an openfin window object and are not the app's main window (5.0 behavior)
+    return app.children
+        .filter(child => child.openfinWindow && child.openfinWindow.name !== child.openfinWindow.uuid)
+        .map(child => child.openfinWindow);
+}
+
+export function getChildrenByUuid(uuid: string): Shapes.OpenFinWindow[]|void {
+    const app = getAppByUuid(uuid);
+
+    if (!app) {
+        log.writeToLog(1, `getChildrenByApp - ${uuid} not found`, true);
+        return [];
     }
 
     // Only return children who have an openfin window object and are not the app's main window (5.0 behavior)

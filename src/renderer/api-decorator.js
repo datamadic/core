@@ -530,7 +530,9 @@ limitations under the License.
             getWindowOptions: getWindowOptionsSync,
             openerSuccessCBCalled: openerSuccessCBCalled,
             emitNoteProxyReady: emitNoteProxyReady,
-            startOFCrashReporter: startOFCrashReporter
+            startOFCrashReporter: startOFCrashReporter,
+            configUrl: configUrl,
+            crashReporter: crashReporter
         }
     };
 
