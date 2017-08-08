@@ -405,17 +405,6 @@ function initializeCrashReporter(argo) {
     }
 }
 
-
-/**
- *
- *
- *
-var a = [];
- setTimeout(() => {
-            while (1) { a.push(Math.random()); }
-        }, 100);
- */
-
 function rotateLogs(argo) {
     // only keep the 7 most recent logfiles
     System.getLogList((err, files) => {
