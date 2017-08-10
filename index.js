@@ -389,19 +389,12 @@ function includeFlashPlugin() {
 
 function initializeCrashReporter(argo) {
     const enableCrashReporting = argo['enable-crash-reporting'];
-    const diagnosticMode = argo['diagnostics'];
+    const diagnosticMode = argo['diagnostics'] || false;
+    const configUrl = argo['startup-url'];
     const shouldStartCrashReporter = enableCrashReporting || diagnosticMode;
 
     if (shouldStartCrashReporter) {
-        crashReporter.startOFCrashReporter({ diagnosticMode });
-        console.log(crashReporter.crashReporterState());
-    }
-
-    if (argo['crash']) {
-        var a = [];
-        setTimeout(() => {
-            while (1) { a.push(Math.random()); }
-        }, 20000);
+        crashReporter.startOFCrashReporter({ diagnosticMode, configUrl });
     }
 }
 

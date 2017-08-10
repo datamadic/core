@@ -27,7 +27,6 @@ let globalShortcut = electron.globalShortcut;
 let nativeImage = electron.nativeImage;
 let ProcessInfo = electron.processInfo;
 let ResourceFetcher = electron.resourceFetcher;
-let crashReporter = electron.crashReporter;
 let Tray = electron.Tray;
 
 // npm modules
@@ -825,40 +824,6 @@ Application.scheduleRestart = function(identity, callback, errorCallback) {
 Application.getConfigUrl = function(identity) {
     const { uuid } = identity;
     return coreState.getConfigUrlByUuid(uuid);
-};
-
-// let apiProtocolBase = require('./api_protocol_base.js');
-let apiProtocolBase = require('../api_protocol/api_handlers/api_protocol_base');
-
-Application.startCrashReporter = function(identity, options) {
-    //TODO validate options?
-    const { uuid } = identity;
-
-    const allEndpoints = coreState.getChildrenByUuid(uuid)
-        .map(win => win.name)
-        .concat([uuid]);
-
-    log.writeToLog(1, 'woah', true);
-    log.writeToLog(1, allEndpoints, true);
-
-    const startCrashReporterPayload = {
-        action: 'start-crash-reporter',
-        payload: options
-    };
-
-    allEndpoints.forEach(name => {
-        const endpoint = { uuid, name };
-
-        apiProtocolBase.sendToIdentity(endpoint, startCrashReporterPayload);
-    });
-
-    crashReporter.startOFCrashReporter(options);
-    return crashReporter.crashReporterState();
-};
-
-Application.getCrashReporterState = function() {
-    //TODO should this be in system on the browser side??
-    return crashReporter.crashReporterState();
 };
 
 Application.terminate = function(identity, callback) {

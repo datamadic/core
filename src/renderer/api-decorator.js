@@ -44,19 +44,19 @@ limitations under the License.
     };
 
     const windowOptions = getWindowOptionsSync();
-    const configUrl = getConfigUrlSync();
+    //const configUrl = getConfigUrlSync();
 
     // used by the notification service to emit the ready event
     function emitNoteProxyReady() {
         raiseEventSync('notification-service-ready', true);
     }
 
-    const crashReporter = global.crashReporter;
+    // const crashReporter = global.crashReporter;
 
-    function startOFCrashReporter(options) {
+    // function startOFCrashReporter(options) {
 
-        return crashReporter.startOFCrashReporter(Object.assign({ configUrl }, options));
-    }
+    //     return crashReporter.startOFCrashReporter(Object.assign({ configUrl }, options));
+    // }
 
     function syncApiCall(action, payload, singleFrameOnly = true, channel = 'of-window-message') {
         let apiPackage = {
@@ -86,9 +86,9 @@ limitations under the License.
         return cachedOptions;
     }
 
-    function getConfigUrlSync() {
-        return syncApiCall('get-config-url');
-    }
+    // function getConfigUrlSync() {
+    //     return syncApiCall('get-config-url');
+    // }
 
     function getWindowIdentitySync() {
         let winOpts = getWindowOptionsSync();
@@ -529,10 +529,7 @@ limitations under the License.
             createChildWindow: createChildWindow,
             getWindowOptions: getWindowOptionsSync,
             openerSuccessCBCalled: openerSuccessCBCalled,
-            emitNoteProxyReady: emitNoteProxyReady,
-            startOFCrashReporter: startOFCrashReporter,
-            configUrl: configUrl,
-            crashReporter: crashReporter
+            emitNoteProxyReady: emitNoteProxyReady
         }
     };
 

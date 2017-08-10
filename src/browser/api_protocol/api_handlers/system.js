@@ -35,6 +35,7 @@ function SystemApiHandler() {
         'get-all-windows': getAllWindows,
         'get-command-line-arguments': { apiFunc: getCommandLineArguments, apiPath: '.getCommandLineArguments' },
         'get-config': { apiFunc: getConfig, apiPath: '.getConfig' },
+        'get-crash-reporter-state': getCrashReporterState,
         'get-device-id': { apiFunc: getDeviceId, apiPath: '.getDeviceId' },
         'get-device-user-id': getDeviceUserId,
         'get-el-ipc-config': getElIPCConfig,
@@ -59,6 +60,7 @@ function SystemApiHandler() {
         //'set-clipboard': setClipboard, -> moved to clipboard.ts
         'set-cookie': setCookie,
         'show-developer-tools': showDeveloperTools,
+        'start-crash-reporter': startCrashReporter,
         'terminate-external-process': { apiFunc: terminateExternalProcess, apiPath: '.terminateExternalProcess' },
         'update-proxy': updateProxy,
         'view-log': { apiFunc: viewLog, apiPath: '.getLog' },
@@ -66,6 +68,22 @@ function SystemApiHandler() {
     };
 
     apiProtocolBase.registerActionMap(SystemApiHandlerMap, 'System');
+
+    function startCrashReporter(identity, message, ack) {
+        let dataAck = _.clone(successAck);
+        const { payload } = message;
+        // log.writeToLog(1, 'in here ', true);
+        // log.writeToLog(1, payload, true);
+        // log.writeToLog(1, message, true);
+        dataAck.data = System.startCrashReporter(identity, payload, false);
+        ack(dataAck);
+    }
+
+    function getCrashReporterState(identity, message, ack) {
+        let dataAck = _.clone(successAck);
+        dataAck.data = System.getCrashReporterState();
+        ack(dataAck);
+    }
 
     function getDeviceUserId(identity, message, ack) {
         let dataAck = _.clone(successAck);

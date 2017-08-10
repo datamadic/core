@@ -22,6 +22,7 @@ const electronApp = require('electron').app;
 const ResourceFetcher = require('electron').resourceFetcher;
 const session = require('electron').session;
 const shell = require('electron').shell;
+const crashReporter = require('electron').crashReporter;
 
 const _ = require('underscore');
 const convertOptions = require('../convert_options.js');
@@ -485,6 +486,15 @@ module.exports.System = {
     },
 
     showChromeNotificationCenter: function() {},
+    startCrashReporter: function(identity, options) {
+        const configUrl = coreState.argo['startup-url'];
+
+        crashReporter.startOFCrashReporter(Object.assign({ configUrl }, options));
+        return crashReporter.crashReporterState();
+    },
+    getCrashReporterState: function() {
+        return crashReporter.crashReporterState();
+    },
     terminateExternalProcess: function(processUuid, timeout = 3000, child = false) {
         let status = ProcessTracker.terminate(processUuid, timeout, child);
 

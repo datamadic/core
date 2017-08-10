@@ -35,7 +35,7 @@ let successAck = {
     success: true
 };
 
-import * as log from '../../log';
+// import * as log from '../../log';
 
 module.exports.applicationApiMap = {
     'close-application': closeApplication,
@@ -47,7 +47,7 @@ module.exports.applicationApiMap = {
     'get-application-manifest': getApplicationManifest,
     'get-child-windows': getChildWindows,
     'get-config-url': getConfigUrl,
-    'get-crash-reporter-state': getCrashReporterState,
+    // 'get-crash-reporter-state': getCrashReporterState,
     'get-info': getInfo,
     'get-parent-application': getParentApplication,
     'get-shortcuts': getShortcuts,
@@ -64,7 +64,7 @@ module.exports.applicationApiMap = {
     'run-application': runApplication,
     'set-shortcuts': { apiFunc: setShortcuts, apiPath: '.setShortcuts' },
     'set-tray-icon': setTrayIcon,
-    'start-crash-reporter': startCrashReporter,
+    // 'start-crash-reporter': startCrashReporter,
     'terminate-application': terminateApplication,
     'wait-for-hung-application': waitForHungApplication
 };
@@ -73,25 +73,25 @@ module.exports.init = function() {
     apiProtocolBase.registerActionMap(module.exports.applicationApiMap, 'Application');
 };
 
-function startCrashReporter(identity, message, ack) {
-    let dataAck = _.clone(successAck);
-    const { payload } = message;
-    log.writeToLog(1, 'in here ', true);
-    log.writeToLog(1, payload, true);
-    log.writeToLog(1, message, true);
-    dataAck.data = Application.startCrashReporter(identity, payload);
-    ack(dataAck);
-}
+// function startCrashReporter(identity, message, ack) {
+//     let dataAck = _.clone(successAck);
+//     const { payload } = message;
+//     log.writeToLog(1, 'in here ', true);
+//     log.writeToLog(1, payload, true);
+//     log.writeToLog(1, message, true);
+//     dataAck.data = Application.startCrashReporter(identity, payload);
+//     ack(dataAck);
+// }
 
-function getCrashReporterState(identity, message, ack) {
-    log.writeToLog(1, 'waka', true);
+// function getCrashReporterState(identity, message, ack) {
+//     log.writeToLog(1, 'waka', true);
 
-    let dataAck = _.clone(successAck);
-    dataAck.data = Application.getCrashReporterState();
+//     let dataAck = _.clone(successAck);
+//     dataAck.data = Application.getCrashReporterState();
 
-    log.writeToLog(1, dataAck.data + 'waka', true);
-    ack(dataAck);
-}
+//     log.writeToLog(1, dataAck.data + 'waka', true);
+//     ack(dataAck);
+// }
 
 function getConfigUrl(identity, message, ack) {
     const dataAck = _.clone(successAck);

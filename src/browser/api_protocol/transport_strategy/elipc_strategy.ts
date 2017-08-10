@@ -94,7 +94,7 @@ export class ElipcStrategy extends ApiTransportBase<MessagePackage> {
             };
 
             /* tslint:disable: max-line-length */
-            system.debugLog(1, `received in-runtime${data.isSync ? '-sync ' : ''}: ${e.frameRoutingId} [${identity.uuid}]-[${identity.name}] ${JSON.stringify(data)}`);
+            // system.debugLog(1, `received in-runtime${data.isSync ? '-sync ' : ''}: ${e.frameRoutingId} [${identity.uuid}]-[${identity.name}] ${JSON.stringify(data)}`);
             /* tslint:enable: max-line-length */
 
             this.requestHandler.handle({
