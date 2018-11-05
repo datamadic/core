@@ -11,6 +11,11 @@ type SharedBounds = {
 type SharedBound = Array<SideName>;
 type BoundIdentifier = [Rectangle, SideName];
 type RectangleBaseKeys = 'x' | 'y' | 'width' | 'height';
+type Graph = [number[], number[][]];
+type GraphSet = {
+    vertices: Set<number>;
+    edges: Set<string>
+};
 export type SharedBoundsList = Array<SharedBound>;
 
 interface Opts {
@@ -331,5 +336,110 @@ export class Rectangle {
         }
 
         return adjLists;
+    }
+
+    
+    public static GRAPH(rects: Rectangle[]): Graph  {
+        const edges = [];
+        const vertices: Array<number> = [];
+        const rectLen = rects.length;
+
+        for (let i = 0; i < rectLen; i++) {
+            const rect = rects[i];
+            vertices.push(i);
+
+            for (let ii = 0; ii < rectLen; ii++) {
+                if (i !== ii) {
+                    // todo put this back to "intersection"
+                    if (rect.sharedBounds(rects[ii]).hasSharedBounds) {
+                        edges.push([i, ii, 123]);
+                    }
+                }
+            }
+        }
+
+        return [vertices, edges];
+    }
+
+    public static SETIFY_GRAPH (graph: Graph): GraphSet {
+
+        const vertices = new Set();
+        const edges = new Set();
+        graph[0].forEach(v => vertices.add(v));
+        graph[1].forEach(e => edges.add(e.toString()));
+        return {vertices, edges};
+    }
+
+    // is a a subgraph of b
+    public static IS_SUBGRAPH (a: GraphSet, b: GraphSet) {
+        for (const v of a.vertices) {
+            if (!b.vertices.has(v)) { return false }
+        }
+
+        for (const e of a.edges) {
+            if (!b.edges.has(e)) { return false; }
+        }
+
+        return true;
+    }
+
+    public static DISTANCES(graph: (number[] | number[][])[] , refV: number) {
+        const [vertices, edges] = graph;
+        const distances = new Map();
+
+        for (let v in vertices) {
+            distances.set(+v, Infinity);
+        }
+
+        distances.set(refV, 0);
+
+        const toVisit = [refV];
+
+        while (toVisit.length) {
+            const u = toVisit.shift();
+
+            const e = (<number [][]>edges).filter(([uu]): boolean => uu === u);
+            
+            e.forEach(([u, v]) => {
+                if (distances.get(v) === Infinity) {
+                    toVisit.push(v);
+                    distances.set(v, distances.get(u) + 1); 
+                }
+            });
+        }
+
+        return distances;
+    }
+
+
+    public static BREADTH_WALK(graph: (number[] | number[][])[] , refV: number) {
+        const [vertices, edges] = graph;
+        const distances = new Map();
+
+        for (let v in vertices) {
+            distances.set(+v, []);
+        }
+
+        distances.set(refV, [refV]);
+
+        const toVisit = [refV];
+
+        while (toVisit.length) {
+            const u = toVisit.shift();
+
+            const e = (<number [][]>edges).filter(([uu]): boolean => uu === u);
+            
+            e.forEach(([u, v]) => {
+                if (distances.get(v).slice(-1)[0] !== v) {
+                    toVisit.push(v);
+                    const d = distances.get(u).concat(distances.get(v));
+
+                    d.push(v);
+                    distances.set(v, d); 
+                }
+            });
+        }
+
+        return distances;
     }
 }

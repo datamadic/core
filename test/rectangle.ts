@@ -276,4 +276,46 @@ describe('Rectangle', () => {
         const result = rect.move(rect1From, rect1To);
         assert(result.height === 38);
     });
+
+    it('should check if one graph is a subgraph of the other', () => {
+        const g1 = Rectangle.SETIFY_GRAPH( Rectangle.GRAPH([
+            new Rectangle(0, 0, 100, 100),
+            new Rectangle(4, 4, 100, 100),
+            new Rectangle(8, 8, 100, 100),
+            new Rectangle(50, 0, 100, 100),
+            new Rectangle(400, 400, 100, 100),
+            new Rectangle(6, 6, 100, 100),
+            new Rectangle(8, 8, 100, 100),
+            new Rectangle(10, 10, 100, 100)
+        ]));
+
+        const isSubGraph = Rectangle.IS_SUBGRAPH(g1, g1);
+        assert(isSubGraph, 'all graphs are a subgraph of themselves');
+    });
+
+    it('should fail to be a subgraph if missing rect', () => {
+        const g1 = Rectangle.SETIFY_GRAPH( Rectangle.GRAPH([
+            new Rectangle(0, 0, 100, 100),
+            new Rectangle(4, 4, 100, 100),
+            new Rectangle(8, 8, 100, 100),
+            new Rectangle(50, 0, 100, 100),
+            new Rectangle(400, 400, 100, 100),
+            new Rectangle(6, 6, 100, 100),
+            new Rectangle(8, 8, 100, 100),
+            new Rectangle(10, 10, 100, 100)
+        ]));
+
+        const g2 = Rectangle.SETIFY_GRAPH( Rectangle.GRAPH([
+            new Rectangle(0, 0, 100, 100),
+            new Rectangle(4, 4, 100, 100),
+            new Rectangle(8, 8, 100, 100),
+            new Rectangle(50, 0, 100, 100),
+            new Rectangle(400, 400, 100, 100),
+            new Rectangle(6, 6, 100, 100),
+            new Rectangle(8, 8, 100, 100)
+        ]));
+
+        const isSubGraph = Rectangle.IS_SUBGRAPH(g1, g2);
+        assert(!isSubGraph, 'all graphs are a subgraph of themselves');
+    });
 });
