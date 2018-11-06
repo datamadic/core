@@ -96,7 +96,7 @@ export class GroupTracker {
                         }
                     });
 
-                    const graphInitial = Rectangle.SETIFY_GRAPH(Rectangle.GRAPH([...positions].map(([, b]) => b)));
+                    const graphInitial = Rectangle.SETIFY_GRAPH(Rectangle.GRAPH_WITH_SIDE_DISTANCES([...positions].map(([, b]) => b)));
                     const moves: Array<() => void> = [];
 
 
@@ -117,7 +117,7 @@ export class GroupTracker {
                         moves.push(() => win.browserWindow.setBounds(rect));
                     });
 
-                    const graphFinal = Rectangle.SETIFY_GRAPH(Rectangle.GRAPH([...positions].map(([, b]) => b)));
+                    const graphFinal = Rectangle.SETIFY_GRAPH(Rectangle.GRAPH_WITH_SIDE_DISTANCES([...positions].map(([, b]) => b)));
 
                     if (Rectangle.IS_SUBGRAPH(graphInitial, graphFinal)) {
                         moves.forEach(move => move());

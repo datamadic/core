@@ -1,4 +1,5 @@
 import { BrowserWindow } from '../shapes';
+import { writeToLog } from './log';
 
 type SideName = 'top' | 'right' | 'bottom' | 'left';
 type SharedBounds = {
@@ -352,7 +353,37 @@ export class Rectangle {
                 if (i !== ii) {
                     // todo put this back to "intersection"
                     if (rect.sharedBounds(rects[ii]).hasSharedBounds) {
-                        edges.push([i, ii, 123]);
+                        edges.push([i, ii]);
+                    }
+                }
+            }
+        }
+
+        return [vertices, edges];
+    }
+
+    public static GRAPH_WITH_SIDE_DISTANCES(rects: Rectangle[]): Graph  {
+        const edges: number[][] = [];
+        const vertices: Array<number> = [];
+        const rectLen = rects.length;
+
+        for (let i = 0; i < rectLen; i++) {
+            const rect = rects[i];
+            vertices.push(i);
+
+            for (let ii = 0; ii < rectLen; ii++) {
+                if (i !== ii) {
+                    // todo put this back to "intersection"
+                    if (rect.sharedBounds(rects[ii]).hasSharedBounds) {
+                        const sharedBoundsList = rect.sharedBoundsList(rects[ii]);
+                        const diffs = sharedBoundsList.map((sides) => {
+                            const [mySide, otherSide] = sides;
+                            return rect[mySide] - rects[ii][otherSide];
+                        });
+
+                        diffs.forEach(diff => {
+                            edges.push([i, ii, diff]);
+                        })
                     }
                 }
             }
@@ -373,11 +404,18 @@ export class Rectangle {
     // is a a subgraph of b
     public static IS_SUBGRAPH (a: GraphSet, b: GraphSet) {
         for (const v of a.vertices) {
-            if (!b.vertices.has(v)) { return false }
+            if (!b.vertices.has(v)) {
+                writeToLog(1, `missing vert ${v}` , true);
+                return false;
+            }
         }
 
         for (const e of a.edges) {
-            if (!b.edges.has(e)) { return false; }
+            if (!b.edges.has(e)) {
+                writeToLog(1, `missing edge ${e}` , true);
+                writeToLog(1, `the edge list ${JSON.stringify([...b.edges])}` , true);
+                return false;
+            }
         }
 
         return true;
