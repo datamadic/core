@@ -1,3 +1,5 @@
+import * as log from './log';
+const l = (x: any) => log.writeToLog(1, x, true);
 
 type SideName = 'top' | 'right' | 'bottom' | 'left';
 type SharedBounds = {
@@ -282,11 +284,11 @@ export class Rectangle {
             case 'right': {
                     changes.width += (rect[sideToAlign] - (this.x + this.width));
                     if (changes.width < this.opts.minWidth) {
-                        // prevent "pushing" a window via the resizing of another
+                        // prevent 'pushing' a window via the resizing of another
                         changes.x = rect[sideToAlign] - this.opts.minWidth;
                         changes.width = this.opts.minWidth;
                     } else if (changes.width > this.opts.maxWidth) {
-                        // prevent "pulling" a window via the resizing of another
+                        // prevent 'pulling' a window via the resizing of another
                         changes.x = rect[sideToAlign] - this.opts.maxWidth;
                         changes.width = this.opts.maxWidth;
                     }
@@ -310,7 +312,7 @@ export class Rectangle {
             case 'bottom': {
                     changes.height += (rect[sideToAlign] - (this.y + this.height));
                     if (changes.height < this.opts.minHeight) {
-                        // prevent "pushing" a window via the resizing of another
+                        // prevent 'pushing' a window via the resizing of another
                         changes.y = rect[sideToAlign] - this.opts.minHeight;
                         changes.height = this.opts.minHeight;
                     } else if (changes.height > this.opts.maxHeight) {
@@ -325,11 +327,87 @@ export class Rectangle {
         }
         return Rectangle.CREATE_FROM_BOUNDS(changes, this.opts);
     }
+
     public shift(delta: RectangleBase) {
         return new Rectangle(this.x + delta.x, this.y + delta.y, this.width + delta.width, this.height + delta.height, this.opts);
     }
 
+    public moveIfIntersectingDelta(cachedBounds: RectangleBase, currentBounds: RectangleBase) {
+        // const delta = cachedBounds.delta(currentBounds);
+        const initialCollides = this.collidesWith(cachedBounds);
+        const finalCollides = this.collidesWith(currentBounds);
+        const pos = [
+            ['top', 'top'],
+            ['top', 'bottom'],
+            ['bottom', 'top'],
+            ['bottom', 'bottom'],
+            ['right', 'left'],
+            ['right', 'right'],
+            ['left', 'left'],
+            ['left', 'right']
+        ];
+
+        // i.top above/below r.top, i.top above/below r.bottom 
+        const ini = Rectangle.CREATE_FROM_BOUNDS(cachedBounds);
+        const fin = Rectangle.CREATE_FROM_BOUNDS(currentBounds);
+        // const r = this;
+        const positionsInitial = this.relativePositions(ini);
+        const positionsFinal = this.relativePositions(fin);
+
+        // remember that this will be called on itself as well!!!
+        if (!this.hasIdenticalBounds(ini)) {
+            l('trying... ');
+            for (let i = 0; i < 8; i++) {
+                if (positionsInitial[i] !== positionsFinal[i]) {
+                    l('YA BROKE!!!!!!!!!!!');
+                    l(JSON.stringify(pos[i]));
+                }
+            }
+    
+        }
+        
+        // if (!(initialCollides || finalCollides)) { return this; }
+
+        // if (finalCollides && !initialCollides) {
+        //     let moveType;
+        //     if      ( delta.x &&  delta.y &&  delta.width  &&  delta.height) { moveType = 'top left'; }
+        //     else if (!delta.x &&  delta.y &&  delta.width  &&  delta.height) { moveType = 'top right'; }
+        //     else if (!delta.x && !delta.y &&  delta.width  &&  delta.height) { moveType = 'bottom right'; }
+        //     else if ( delta.x && !delta.y &&  delta.width  &&  delta.height) { moveType = 'bottom left'; }
+        //     else if (!delta.x &&  delta.y && !delta.width  &&  delta.height) { moveType = 'top'; }
+        //     else if (!delta.x && !delta.y &&  delta.width  && !delta.height) { moveType = 'right'; }
+        //     else if (!delta.x && !delta.y && !delta.width  &&  delta.height) { moveType = 'bottom'; }
+        //     else if ( delta.x && !delta.y &&  delta.width  && !delta.height) { moveType = 'left'; }
+
+        //     switch (moveType) {
+        //         case 'left':
+        //         case 'right': {
+        //             const leftDistance = Math.abs(this.left - currentBounds)
+        //             const edgeToAlign = 
+        //         }
+
+        //     } 
+            
+        // }
+
+    }
+
+    // bad, coupling to the pos list BAAADDDD! 
+    private relativePositions(r: Rectangle) {
+        return [
+            this.top > r.top,
+            this.top > r.bottom,
+            this.bottom > r.top,
+            this.bottom > r.bottom,
+            this.right > r.left,
+            this.right > r.right,
+            this.left > r.left,
+            this.left > r.right
+        ];
+    }
+
     public move(cachedBounds: RectangleBase, currentBounds: RectangleBase) {
+        this.moveIfIntersectingDelta(cachedBounds, currentBounds);
         const sharedBoundsList = this.sharedBoundsList(Rectangle.CREATE_FROM_BOUNDS(cachedBounds));
         const currLeader = Rectangle.CREATE_FROM_BOUNDS(currentBounds);
         const delta = Rectangle.CREATE_FROM_BOUNDS(cachedBounds).delta(currLeader);
@@ -340,10 +418,19 @@ export class Rectangle {
             }
         }
 
+        
         return rect;
     }
+
     public adjacent(rects: Rectangle[]) {
         return Array.from(Rectangle.ADJACENCY_LIST([...rects, this as Rectangle]).values()).find(list => list.includes(this));
+    }
+
+    public hasIdenticalBounds(rect: RectangleBase): boolean {
+        return this.x === rect.x &&
+            this.y === rect.y &&
+            this.width === rect.width &&
+            this.height === rect.height;
     }
 
     public static ADJACENCY_LIST(rects: Rectangle[]): Map<number, Rectangle[]> {
@@ -420,7 +507,15 @@ export class Rectangle {
         return true;
     }
 
-    public static GRAPH(rects: Rectangle[]): Graph  {
+    public static sharedBoundValidator(rect1: Rectangle, rect2: Rectangle): boolean {
+        return rect1.sharedBoundsOnIntersection(rect2).hasSharedBounds
+    }
+
+    public static collisionsValidator(rect1: Rectangle, rect2: Rectangle): boolean  {
+        return rect1.collidesWith(rect2);
+    } 
+
+    public static GRAPH(rects: Rectangle[], validator = Rectangle.sharedBoundValidator): Graph  {
         const edges = [];
         const vertices: Array<number> = [];
         const rectLen = rects.length;
@@ -431,7 +526,7 @@ export class Rectangle {
 
             for (let ii = 0; ii < rectLen; ii++) {
                 if (i !== ii) {
-                    if (rect.sharedBoundsOnIntersection(rects[ii]).hasSharedBounds) {
+                    if (validator(rects[i], rects[ii])) {
                         edges.push([i, ii]);
                     }
                 }
