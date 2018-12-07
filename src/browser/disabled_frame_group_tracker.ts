@@ -6,6 +6,8 @@ import WindowGroups from './window_groups';
 const WindowTransaction = require('electron').windowTransaction;
 import {getRuntimeProxyWindow} from './window_groups_runtime_proxy';
 import {RectangleBase, Rectangle} from './rectangle';
+import * as log from './log';
+const l = (x: any) => log.writeToLog(1, x, true);
 import {
     moveFromOpenFinWindow,
     zeroDelta,
@@ -198,9 +200,23 @@ function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions:
     const distances = Rectangle.DISTANCES(windowGraph, leaderRect);
     const allMoves = initialPositions
         .map(({ofWin, rect, offset}, index): Move => {
+
+            // probable should check if its the leader and then do nothing...
+            // also should make the start and end rects out here
             let rectFinalPosition = rect;
-            if (distances.get(index) < Infinity || true) {
+            const cachedBounds = Rectangle.CREATE_FROM_BOUNDS(start);
+            const currentBounds = Rectangle.CREATE_FROM_BOUNDS(end);
+            const crossedEdges = rect.crossedEdges(cachedBounds, currentBounds);
+
+            if (distances.get(index) < Infinity) {
                 rectFinalPosition = rect.move(start, end);
+            } else if (crossedEdges.hasCrossedEdges) {
+                l('OH BUT I DID!!!');
+                l(ofWin.name);
+                l(JSON.stringify(crossedEdges.xCrossing));
+                l(JSON.stringify(crossedEdges.yCrossing));
+                const endRect = Rectangle.CREATE_FROM_BOUNDS(end);
+                rectFinalPosition = rect.alignCrossedEdges(crossedEdges, endRect);
             }
             return {ofWin, rect: rectFinalPosition, offset};
         });
