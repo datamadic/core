@@ -200,21 +200,21 @@ function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions:
     const distances = Rectangle.DISTANCES(windowGraph, leaderRect);
     const allMoves = initialPositions
         .map(({ofWin, rect, offset}, index): Move => {
-
-            // probable should check if its the leader and then do nothing...
-            // also should make the start and end rects out here
             let rectFinalPosition = rect;
             const cachedBounds = Rectangle.CREATE_FROM_BOUNDS(start);
             const currentBounds = Rectangle.CREATE_FROM_BOUNDS(end);
-            const crossedEdges = rect.crossedEdges(cachedBounds, currentBounds);
+            let crossedEdges = rect.crossedEdges(cachedBounds, currentBounds);
 
-            if (distances.get(index) < Infinity) {
+            if (rectFinalPosition.hasIdenticalBounds(cachedBounds)) {
+                rectFinalPosition = currentBounds;
+            } else if (distances.get(index) < Infinity && crossedEdges.hasCrossedEdges) {
+                rectFinalPosition = rect.move(start, end);
+                const endRect = Rectangle.CREATE_FROM_BOUNDS(end);
+                crossedEdges = rectFinalPosition.crossedEdges(cachedBounds, currentBounds);
+                rectFinalPosition = rectFinalPosition.alignCrossedEdges(crossedEdges, endRect);
+            } else if (distances.get(index) < Infinity) {
                 rectFinalPosition = rect.move(start, end);
             } else if (crossedEdges.hasCrossedEdges) {
-                l('OH BUT I DID!!!');
-                l(ofWin.name);
-                l(JSON.stringify(crossedEdges.xCrossing));
-                l(JSON.stringify(crossedEdges.yCrossing));
                 const endRect = Rectangle.CREATE_FROM_BOUNDS(end);
                 rectFinalPosition = rect.alignCrossedEdges(crossedEdges, endRect);
             }

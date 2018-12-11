@@ -334,32 +334,28 @@ export class Rectangle {
         return new Rectangle(this.x + delta.x, this.y + delta.y, this.width + delta.width, this.height + delta.height, this.opts);
     }
 
-    private readonly allEdgeCrossings: SideName[][] = [ //todo remember this
-        ['top', 'top'],
-        ['top', 'bottom'],
-        ['bottom', 'top'],
-        ['bottom', 'bottom'],
-        ['right', 'left'],
-        ['right', 'right'],
-        ['left', 'left'],
-        ['left', 'right']
-    ];
-
     public crossedEdges(initialBounds: Rectangle, finalBounds: Rectangle): EdgeCrossings {
         const positionsInitial = this.relativePositions(initialBounds);
         const positionsFinal = this.relativePositions(finalBounds);
         const crossedBounds: SideName[][] = []
         const currentBoundsCollide = this.collidesWith(finalBounds);
+        const resizedOutOfContainingRect = (!currentBoundsCollide && this.collidesWith(initialBounds));
+        const adjacentOnAtLeastOneSide = this.sharedBoundsOnIntersection(finalBounds).hasSharedBounds;
+
+        // if (this.hasIdenticalBounds(initialBounds)) {
+        //     return finalBounds;
+        // }
 
         // remember that this will be called on itself as well!
-        if (!this.hasIdenticalBounds(initialBounds) && // can I take this one out?
-            currentBoundsCollide ||
-            (!currentBoundsCollide && this.collidesWith(initialBounds))
-            ) {
-            for (let i = 0; i < this.allEdgeCrossings.length; i++) {
+        // should this get taken out?? 
+        if (currentBoundsCollide 
+            || resizedOutOfContainingRect
+            || adjacentOnAtLeastOneSide) {
+                
+            for (let i = 0; i < Rectangle.EDGE_CROSSINGS.length; i++) {
                 if (positionsInitial[i] !== positionsFinal[i]) {
-                    l(JSON.stringify(this.allEdgeCrossings[i]));
-                    crossedBounds.push(this.allEdgeCrossings[i])
+                    l(JSON.stringify(Rectangle.EDGE_CROSSINGS[i]));
+                    crossedBounds.push(Rectangle.EDGE_CROSSINGS[i])
                 }
             }
         }
@@ -391,6 +387,7 @@ export class Rectangle {
     public alignCrossedEdges(edgeCrossings: EdgeCrossings, finalOtherBounds: Rectangle) {
         let rect: Rectangle = this;
         const {xCrossing, yCrossing} = edgeCrossings;
+
         if (xCrossing) {
             rect = rect.alignSide(xCrossing.mine, finalOtherBounds, xCrossing.other)
         }
@@ -398,90 +395,21 @@ export class Rectangle {
             rect = rect.alignSide(yCrossing.mine, finalOtherBounds, yCrossing.other)
         }
         return rect;
-    } 
-
-    public moveIfIntersectingDelta(cachedBounds: RectangleBase, currentBounds: RectangleBase): Rectangle {
-        const ini = Rectangle.CREATE_FROM_BOUNDS(cachedBounds);
-        const fin = Rectangle.CREATE_FROM_BOUNDS(currentBounds);
-        // const r = this;
-        const positionsInitial = this.relativePositions(ini);
-        const positionsFinal = this.relativePositions(fin);
-        const crossedBounds: SideName[][] = []
-
-        // remember that this will be called on itself as well!!!
-        if (!this.hasIdenticalBounds(ini)) {
-            for (let i = 0; i < 8; i++) {
-                if (positionsInitial[i] !== positionsFinal[i]) {
-                    l(JSON.stringify(this.allEdgeCrossings[i]));
-                    crossedBounds.push(this.allEdgeCrossings[i])
-                }
-            }
-        }
-        
-        // find out which bounds were crossed "first". This is both x and y
-        let firstXCrossing;
-        let firstYCrossing;
-
-        for (let [mine, other] of crossedBounds) {
-            const distance = Math.abs(this[mine] - fin[other]);
-            if (mine === 'left' || mine === 'right') {
-                if (!firstXCrossing || distance > firstXCrossing.distance) {
-                    firstXCrossing = {mine, other, distance};
-                }
-            } else {
-                if (!firstYCrossing || distance > firstYCrossing.distance) {
-                    firstYCrossing = {mine, other, distance};
-                }
-            }
-        }
-
-        let rect: Rectangle = this;
-        if (firstXCrossing) {
-            rect = rect.alignSide(firstXCrossing.mine, fin, firstXCrossing.other)
-        }
-        if (firstYCrossing) {
-            rect = rect.alignSide(firstYCrossing.mine, fin, firstYCrossing.other)
-        }
-        return rect;
-
-        // if (!(initialCollides || finalCollides)) { return this; }
-
-        // if (finalCollides && !initialCollides) {
-        //     let moveType;
-        //     if      ( delta.x &&  delta.y &&  delta.width  &&  delta.height) { moveType = 'top left'; }
-        //     else if (!delta.x &&  delta.y &&  delta.width  &&  delta.height) { moveType = 'top right'; }
-        //     else if (!delta.x && !delta.y &&  delta.width  &&  delta.height) { moveType = 'bottom right'; }
-        //     else if ( delta.x && !delta.y &&  delta.width  &&  delta.height) { moveType = 'bottom left'; }
-        //     else if (!delta.x &&  delta.y && !delta.width  &&  delta.height) { moveType = 'top'; }
-        //     else if (!delta.x && !delta.y &&  delta.width  && !delta.height) { moveType = 'right'; }
-        //     else if (!delta.x && !delta.y && !delta.width  &&  delta.height) { moveType = 'bottom'; }
-        //     else if ( delta.x && !delta.y &&  delta.width  && !delta.height) { moveType = 'left'; }
-
-        //     switch (moveType) {
-        //         case 'left':
-        //         case 'right': {
-        //             const leftDistance = Math.abs(this.left - currentBounds)
-        //             const edgeToAlign = 
-        //         }
-
-        //     } 
-            
-        // }
-
     }
 
-    // todo bad, coupling to the pos list BAAADDDD! 
-    private relativePositions(r: Rectangle) {
-        return [
-            this.top > r.top,
-            this.top > r.bottom,
-            this.bottom > r.top,
-            this.bottom > r.bottom,
-            this.right > r.left,
-            this.right > r.right,
-            this.left > r.left,
-            this.left > r.right
-        ];
+    private static readonly EDGE_CROSSINGS: SideName[][] = [
+        ['top', 'top'],
+        ['top', 'bottom'],
+        ['bottom', 'top'],
+        ['bottom', 'bottom'],
+        ['right', 'left'],
+        ['right', 'right'],
+        ['left', 'left'],
+        ['left', 'right']
+    ];
+ 
+    private relativePositions(rect: Rectangle) {
+        return Rectangle.EDGE_CROSSINGS.map(([mySide, otherSide]) => this[mySide] > rect[otherSide]);
     }
 
     public move(cachedBounds: RectangleBase, currentBounds: RectangleBase): Rectangle {//todo declare ret types always
