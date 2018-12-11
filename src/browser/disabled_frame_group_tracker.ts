@@ -6,8 +6,6 @@ import WindowGroups from './window_groups';
 const WindowTransaction = require('electron').windowTransaction;
 import {getRuntimeProxyWindow} from './window_groups_runtime_proxy';
 import {RectangleBase, Rectangle} from './rectangle';
-import * as log from './log';
-const l = (x: any) => log.writeToLog(1, x, true);
 import {
     moveFromOpenFinWindow,
     zeroDelta,
@@ -204,18 +202,17 @@ function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions:
             const cachedBounds = Rectangle.CREATE_FROM_BOUNDS(start);
             const currentBounds = Rectangle.CREATE_FROM_BOUNDS(end);
             let crossedEdges = rect.crossedEdges(cachedBounds, currentBounds);
+            const endRect = Rectangle.CREATE_FROM_BOUNDS(end);
 
             if (rectFinalPosition.hasIdenticalBounds(cachedBounds)) {
                 rectFinalPosition = currentBounds;
             } else if (distances.get(index) < Infinity && crossedEdges.hasCrossedEdges) {
                 rectFinalPosition = rect.move(start, end);
-                const endRect = Rectangle.CREATE_FROM_BOUNDS(end);
                 crossedEdges = rectFinalPosition.crossedEdges(cachedBounds, currentBounds);
                 rectFinalPosition = rectFinalPosition.alignCrossedEdges(crossedEdges, endRect);
             } else if (distances.get(index) < Infinity) {
                 rectFinalPosition = rect.move(start, end);
             } else if (crossedEdges.hasCrossedEdges) {
-                const endRect = Rectangle.CREATE_FROM_BOUNDS(end);
                 rectFinalPosition = rect.alignCrossedEdges(crossedEdges, endRect);
             }
             return {ofWin, rect: rectFinalPosition, offset};

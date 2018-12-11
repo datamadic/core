@@ -1,6 +1,3 @@
-import * as log from './log';
-const l = (x: any) => log.writeToLog(1, x, true);
-
 type SideName = 'top' | 'right' | 'bottom' | 'left';
 type SharedBounds = {
     hasSharedBounds: boolean;
@@ -342,25 +339,17 @@ export class Rectangle {
         const resizedOutOfContainingRect = (!currentBoundsCollide && this.collidesWith(initialBounds));
         const adjacentOnAtLeastOneSide = this.sharedBoundsOnIntersection(finalBounds).hasSharedBounds;
 
-        // if (this.hasIdenticalBounds(initialBounds)) {
-        //     return finalBounds;
-        // }
-
-        // remember that this will be called on itself as well!
-        // should this get taken out?? 
         if (currentBoundsCollide 
             || resizedOutOfContainingRect
             || adjacentOnAtLeastOneSide) {
-                
+
             for (let i = 0; i < Rectangle.EDGE_CROSSINGS.length; i++) {
                 if (positionsInitial[i] !== positionsFinal[i]) {
-                    l(JSON.stringify(Rectangle.EDGE_CROSSINGS[i]));
                     crossedBounds.push(Rectangle.EDGE_CROSSINGS[i])
                 }
             }
         }
         
-        // todo: find out which bounds were crossed "first". This is both x and y
         let xCrossing: EdgeCrossing;
         let yCrossing: EdgeCrossing;
 
