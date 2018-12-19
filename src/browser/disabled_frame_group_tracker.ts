@@ -203,44 +203,52 @@ function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions:
     }
     const windowGraph = Rectangle.GRAPH(rectPositions);
     const distances = Rectangle.DISTANCES(windowGraph, leaderRect);
-    const allMoves = initialPositions
-        .map(({ofWin, rect, offset}, index): Move => {
-            let rectFinalPosition = rect;
-            const cachedBounds = Rectangle.CREATE_FROM_BOUNDS(start);
-            const currentBounds = Rectangle.CREATE_FROM_BOUNDS(end);
-            let crossedEdges = rect.crossedEdgesBeyondThreshold(cachedBounds, currentBounds);
-            const hasCrossedEdges = crossedEdges.length > 0;
-            const endRect = Rectangle.CREATE_FROM_BOUNDS(end);
-            const initiallyReachable = distances.get(index) < Infinity;
+    const allMoves = Rectangle.PROP_MOVE(
+        initialPositions.map(x => x.rect),
+        leaderRect,
+        Rectangle.CREATE_FROM_BOUNDS(start),
+        Rectangle.CREATE_FROM_BOUNDS(end)).map((x, i) => ({
+            ofWin: initialPositions[i].ofWin,
+            rect: x,
+            offset: initialPositions[i].offset}) );
+    // const allMoves = initialPositions
+    //     .map(({ofWin, rect, offset}, index): Move => {
+    //         let rectFinalPosition = rect;
+    //         const cachedBounds = Rectangle.CREATE_FROM_BOUNDS(start);
+    //         const currentBounds = Rectangle.CREATE_FROM_BOUNDS(end);
+    //         let crossedEdges = rect.crossedEdgesBeyondThreshold(cachedBounds, currentBounds);
+    //         const hasCrossedEdges = crossedEdges.length > 0;
+    //         const endRect = Rectangle.CREATE_FROM_BOUNDS(end);
+    //         const initiallyReachable = distances.get(index) < Infinity;
 
 
-            if (rectFinalPosition.hasIdenticalBounds(cachedBounds)) {
-                rectFinalPosition = currentBounds;
-            } else {
+    //         if (rectFinalPosition.hasIdenticalBounds(cachedBounds)) {
+    //             rectFinalPosition = currentBounds;
+    //         } else {
 
-                if (initiallyReachable) {
-                    rectFinalPosition = rect.move(start, end);
+    //             if (initiallyReachable) {
+    //                 rectFinalPosition = rect.move(start, end);
 
-                    // This is how one could detect if a bound was broken via a move "pushing" or "pulling" a
-                    // window as a result of breaking a min size constraint. Leave as a reference for now.
-                    // const brokeByMove = currentBounds.crossedEdgesBeyondThreshold(rect, rectFinalPosition);
-                    // if (brokeByMove.length > 0) {
-                    //     // handle pushed broken edges
-                    // }
+    //                 // This is how one could detect if a bound was broken via a move "pushing" or "pulling" a
+    //                 // window as a result of breaking a min size constraint. Leave as a reference for now.
+    //                 // const brokeByMove = currentBounds.crossedEdgesBeyondThreshold(rect, rectFinalPosition);
+    //                 // if (brokeByMove.length > 0) {
+    //                 //     // handle pushed broken edges
+    //                 // }
 
-                    crossedEdges = rectFinalPosition.crossedEdgesBeyondThreshold(cachedBounds, currentBounds);
+    //                 crossedEdges = rectFinalPosition.crossedEdgesBeyondThreshold(cachedBounds, currentBounds);
 
-                    if (crossedEdges.length > 0) {
-                        rectFinalPosition = rectFinalPosition.alignCrossedEdges(crossedEdges, endRect);
-                    }
+    //                 if (crossedEdges.length > 0) {
+    //                     rectFinalPosition = rectFinalPosition.alignCrossedEdges(crossedEdges, endRect);
+    //                 }
 
-                } else if (hasCrossedEdges) {
-                    rectFinalPosition = rect.alignCrossedEdges(crossedEdges, endRect);
-                }
-            }
+    //             } else if (hasCrossedEdges) {
+    //                 rectFinalPosition = rect.alignCrossedEdges(crossedEdges, endRect);
+    //             }
+    //         }
 
-            return {ofWin, rect: rectFinalPosition, offset};
-        });
+    //         return {ofWin, rect: rectFinalPosition, offset};
+    //     });
     const moves = allMoves.filter((move, i) => initialPositions[i].rect.moved(move.rect));
 
     const graphInitial = Rectangle.GRAPH_WITH_SIDE_DISTANCES(initialPositions.map(moveToRect));
