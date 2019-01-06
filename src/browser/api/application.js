@@ -34,6 +34,7 @@ import route from '../../common/route';
 import { isAboutPageUrl, isValidChromePageUrl, isFileUrl, isHttpUrl, isURLAllowed, getIdentityFromObject } from '../../common/main';
 import { ERROR_BOX_TYPES } from '../../common/errors';
 import { deregisterAllRuntimeProxyWindows } from '../window_groups_runtime_proxy';
+// import { putInElasticSearch } from '../../browser/of_events';
 
 const subscriptionManager = new SubscriptionManager();
 const TRAY_ICON_KEY = 'tray-icon-events';
@@ -618,8 +619,31 @@ function run(identity, mainWindowOpts, userAppConfigArgs) {
     const win = Window.create(app.id, mainWindowOpts);
     coreState.setWindowObj(app.id, win);
 
+    /*
+        "uuid": { "type": "text"  },
+        "run_id": { "type": "text"},
+        "closed": { "type": "text"}
+    */
+
+    /* jshint ignore:start */
+    // const runId = Date.now();
+    /* jshint ignore:end */
+
+    // let heartBeatNum;
     // fire the connected once the main window's dom is ready
     app.mainWindow.webContents.once('dom-ready', () => {
+
+        // ### put starting here...
+        // heartBeatNum = setInterval(() => {
+        //     putInElasticSearch('of_apps', 'heartbeat', {
+        //         uuid,
+        //         /* jshint ignore:start */
+        //         run_id: runId,
+        //         /* jshint ignore:end */
+        //         closed: false
+        //     });
+        // }, 5000);
+
         //edge case where the window might be destroyed by the time we get here.
         if (!app.mainWindow.isDestroyed()) {
             const pid = app.mainWindow.webContents.processId;
@@ -658,6 +682,17 @@ function run(identity, mainWindowOpts, userAppConfigArgs) {
     // If you are the last app to close, take the runtime with you.
     // app will need to consider remote connections shortly...
     ofEvents.once(route.window('closed', uuid, uuid), () => {
+
+        // ### put close here
+        // clearInterval(heartBeatNum);
+        // putInElasticSearch('of_apps', 'heartbeat', {
+        //     uuid,
+        //     /* jshint ignore:start */
+        //     run_id: runId,
+        //     /* jshint ignore:end */
+        //     closed: true
+        // });
+
         delete fetchingIcon[uuid];
         removeTrayIcon(app);
 

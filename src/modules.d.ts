@@ -10,6 +10,7 @@ declare module 'electron' {
         export function generateGUID(): string;
         export function getCommandLineArguments(): string;
         export function getCommandLineArgv(): string[];
+        export function getMachineId(): string;
         export function getPath(str: string): string;
         export function getTickCount(): number;
         export function isAeroGlassEnabled(): boolean;

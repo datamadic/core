@@ -3,6 +3,7 @@ import { ApiTransportBase, MessagePackage, MessageConfiguration } from './api_tr
 import { default as RequestHandler } from './base_handler';
 import { Endpoint, ActionMap } from '../shapes';
 import { Identity } from '../../../shapes';
+import { putInElasticSearch } from '../../of_events';
 declare var require: any;
 
 const coreState = require('../../core_state');
@@ -150,6 +151,7 @@ export class ElipcStrategy extends ApiTransportBase<MessagePackage> {
     protected onMessage(e: any, rawData: any, ackFactoryDelegate: any): void {
 
         try {
+
             const browserWindow = e.sender.getOwnerBrowserWindow();
             const currWindow = browserWindow ? coreState.getWinById(browserWindow.id) : null;
             const openfinWindow = currWindow && currWindow.openfinWindow;
@@ -159,7 +161,8 @@ export class ElipcStrategy extends ApiTransportBase<MessagePackage> {
                 throw new Error(`Unable to locate window information for endpoint with window id ${browserWindow.id}`);
             }
 
-            const data = JSON.parse(JSON.stringify(rawData));
+            const dataStr = JSON.stringify(rawData);
+            const data = JSON.parse(dataStr);
 
             const configuration: ElIPCConfiguration = new ElIPCConfiguration(new BreadcrumbConfiguration(opts),
                                                                              new RendererBatchConfiguration(opts, data));
@@ -190,6 +193,11 @@ export class ElipcStrategy extends ApiTransportBase<MessagePackage> {
                 parentFrame: opts.name,
                 uuid: opts.uuid
             };
+
+            putInElasticSearch('of_apicall', data.action, {
+                data: dataStr,
+                identity
+            });
 
             /* tslint:disable: max-line-length */
             //message payload might contain sensitive data, mask it.

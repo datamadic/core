@@ -2,6 +2,61 @@ import { app } from 'electron';
 import { EventEmitter } from 'events';
 import { isFloat } from '../common/main';
 import route from '../common/route';
+import * as querystring from 'querystring';
+import * as http from 'http';
+const system = require('./api/system');
+
+const machineId: string = '99';
+const sessId = Date.now();
+
+// if (process.platform === 'win32') {
+//     machineId = app.readRegistryValue('HKEY_LOCAL_MACHINE', 'SOFTWARE\\Microsoft\\Cryptography', 'MachineGuid');
+// } else if (process.platform === 'darwin') {
+//     machineId = app.getMachineId();
+// }
+
+export function putInElasticSearch(index: string, message: string, data: any = {} ) {
+      const postData = JSON.stringify({
+        message,
+        ...data,
+        'timestamp': Date.now(),
+        user: process.env.USER || process.env.USERNAME,
+        machine_id: machineId,
+        session_id: sessId
+      });
+
+      const options = {
+        // tslint:disable-next-line
+        hostname: 'localhost',
+        port: 9200,
+        path: `/${index}/_doc/`,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData)
+        }
+      };
+
+      const req = http.request(options, (res) => {
+        console.warn(`STATUS: ${res.statusCode}`);
+        console.warn(`HEADERS: ${JSON.stringify(res.headers)}`);
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => {
+          console.warn(`BODY: ${chunk}`);
+        });
+        res.on('end', () => {
+          console.warn('No more data in response.');
+        });
+      });
+
+      req.on('error', (e) => {
+        console.error(`problem with request: ${e.message}`);
+      });
+
+      // write data to request body
+      req.write(postData);
+      req.end();
+}
 
 interface PastEvent {
     payload: any;
@@ -23,6 +78,7 @@ class OFEvents extends EventEmitter {
         const tokenizedRoute = routeString.split('/');
         const eventPropagations = new Map<string, any>();
         const [payload, maybeOpts, ...otherExtraArgs] = data;
+
         if (this.isSavingEvents) {
             const timestampJs = Date.now();
             const timestampNative = app.nowFromSystemTime();
@@ -36,6 +92,10 @@ class OFEvents extends EventEmitter {
             const source = tokenizedRoute.slice(2).join('/');
             const envelope = { channel, topic, source, data };
             const propagateToSystem = !topic.match(/-requested$/);
+
+            putInElasticSearch('of_events', routeString, {
+                channel, topic, uuid, source, data
+            });
 
             // Wildcard on all topics of a channel (such as on the system channel)
             super.emit(route(channel, '*'), envelope);
