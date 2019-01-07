@@ -4,16 +4,69 @@ import { isFloat } from '../common/main';
 import route from '../common/route';
 import * as querystring from 'querystring';
 import * as http from 'http';
-const system = require('./api/system');
 
-const machineId: string = '99';
+let machineId: string;
 const sessId = Date.now();
 
-// if (process.platform === 'win32') {
-//     machineId = app.readRegistryValue('HKEY_LOCAL_MACHINE', 'SOFTWARE\\Microsoft\\Cryptography', 'MachineGuid');
-// } else if (process.platform === 'darwin') {
-//     machineId = app.getMachineId();
-// }
+if (process.platform === 'win32') {
+    machineId = app.readRegistryValue('HKEY_LOCAL_MACHINE', 'SOFTWARE\\Microsoft\\Cryptography', 'MachineGuid');
+} else if (process.platform === 'darwin') {
+    machineId = app.getMachineId();
+}
+
+/*
+POST twitter/_delete_by_query
+{
+  "query": {
+    "match": {
+      "message": "some message"
+    }
+  }
+} */
+
+export function deleteFromElasticSearch(index: string, query: any) {
+     ///* jshint ignore:start */
+     // query.match.machine_id = machineId;
+     // /* jshint ignore:end */
+
+    const postData = JSON.stringify(query);
+
+    const options = {
+      // tslint:disable-next-line
+      hostname: 'localhost',
+      port: 9200,
+      path: `/${index}/_delete_by_query/`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const res = new Promise((reso, rej) => {
+      const req = http.request(options, (res) => {
+          console.warn(`STATUS: ${res.statusCode}`);
+          console.warn(`HEADERS: ${JSON.stringify(res.headers)}`);
+          res.setEncoding('utf8');
+          res.on('data', (chunk) => {
+            console.warn(`#################################: ${chunk}`);
+              reso(chunk);
+          });
+          res.on('end', () => {
+            console.warn('No more data in response.');
+          });
+        });
+
+        req.on('error', (e) => {
+          console.error(`problem with request: ${e.message}`);
+        });
+
+        // write data to request body
+        req.write(postData);
+        req.end();
+    });
+
+}
 
 export function putInElasticSearch(index: string, message: string, data: any = {} ) {
       const postData = JSON.stringify({
@@ -37,25 +90,30 @@ export function putInElasticSearch(index: string, message: string, data: any = {
         }
       };
 
-      const req = http.request(options, (res) => {
-        console.warn(`STATUS: ${res.statusCode}`);
-        console.warn(`HEADERS: ${JSON.stringify(res.headers)}`);
-        res.setEncoding('utf8');
-        res.on('data', (chunk) => {
-          console.warn(`BODY: ${chunk}`);
-        });
-        res.on('end', () => {
-          console.warn('No more data in response.');
-        });
+      const res = new Promise((reso, rej) => {
+        const req = http.request(options, (res) => {
+            console.warn(`STATUS: ${res.statusCode}`);
+            console.warn(`HEADERS: ${JSON.stringify(res.headers)}`);
+            res.setEncoding('utf8');
+            res.on('data', (chunk) => {
+              console.warn(`BODY: ${chunk.BODY}`);
+              console.warn(`BODY: ${chunk}`);
+                reso(chunk);
+            });
+            res.on('end', () => {
+              console.warn('No more data in response.');
+            });
+          });
+
+          req.on('error', (e) => {
+            console.error(`problem with request: ${e.message}`);
+          });
+
+          // write data to request body
+          req.write(postData);
+          req.end();
       });
 
-      req.on('error', (e) => {
-        console.error(`problem with request: ${e.message}`);
-      });
-
-      // write data to request body
-      req.write(postData);
-      req.end();
 }
 
 interface PastEvent {

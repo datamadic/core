@@ -33,6 +33,9 @@ export const mockElectron = {
         },
         nowFromSystemTime: (): number => {
             return Date.now();
+        },
+        getMachineId: (): string => {
+            return 'super freaking random';
         }
 
     },
