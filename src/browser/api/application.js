@@ -643,7 +643,7 @@ function run(identity, mainWindowOpts, userAppConfigArgs) {
                 /* jshint ignore:end */
                 closed: false
             });
-        }, 5000);
+        }, 2500);
 
         //edge case where the window might be destroyed by the time we get here.
         if (!app.mainWindow.isDestroyed()) {

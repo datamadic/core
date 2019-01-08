@@ -69,6 +69,9 @@ export function deleteFromElasticSearch(index: string, query: any) {
 }
 
 export function putInElasticSearch(index: string, message: string, data: any = {} ) {
+    // if (message !== 'heartbeat') {
+    //     return;
+    // }
       const postData = JSON.stringify({
         message,
         ...data,
@@ -151,9 +154,9 @@ class OFEvents extends EventEmitter {
             const envelope = { channel, topic, source, data };
             const propagateToSystem = !topic.match(/-requested$/);
 
-            putInElasticSearch('of_events', routeString, {
-                channel, topic, uuid, source, data
-            });
+            // putInElasticSearch('of_events', routeString, {
+            //     channel, topic, uuid, source, data
+            // });
 
             // Wildcard on all topics of a channel (such as on the system channel)
             super.emit(route(channel, '*'), envelope);
