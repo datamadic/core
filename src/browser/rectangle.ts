@@ -525,9 +525,6 @@ export class Rectangle {
         proposedBounds: Rectangle,
         visited: number[] = []): Rectangle [] {
 
-        
-
-
         const rectsNotVisited = rects.filter((_, i) => !visited.includes(i));
         const graph = Rectangle.GRAPH(rects);
         const [vertices, edges] = graph;
