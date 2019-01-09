@@ -186,7 +186,7 @@ module.exports = (grunt) => {
 
     grunt.registerTask('build-dev', [
         'test',
-        'rebuild-native-modules',
+        // 'rebuild-native-modules',
         'copy',
         'clean-up-dependencies',
         'sign-files',
