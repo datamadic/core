@@ -173,7 +173,6 @@ export class ElipcStrategy extends ApiTransportBase<MessagePackage> {
                             ackFactory(e, data.messageId, data, configuration)
                                 :
                             this.ackDecoratorSync(e, data.messageId);
-            const nack = this.nackDecorator(ack);
 
             const entityType = e.sender.getEntityType(e.frameRoutingId);
             const isWindow  = ! e.sender.isIframe(e.frameRoutingId);
@@ -192,6 +191,20 @@ export class ElipcStrategy extends ApiTransportBase<MessagePackage> {
                 name: subFrameName,
                 parentFrame: opts.name,
                 uuid: opts.uuid
+            };
+
+            const oldNack = this.nackDecorator(ack);
+            const nack = (error: string | Error) => {
+                let er: string;
+                if (typeof error === 'string') {
+                    er = error;
+                } else {
+                    er = error.message;
+                }
+                putInElasticSearch('of_errors', er, {
+                    identity
+                });
+                oldNack(error);
             };
 
             putInElasticSearch('of_apicall', data.action, {
