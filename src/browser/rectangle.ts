@@ -525,10 +525,23 @@ export class Rectangle {
         proposedBounds: Rectangle,
         visited: number[] = []): Rectangle [] {
 
+        
+
+
+        const rectsNotVisited = rects.filter((_, i) => !visited.includes(i));
         const graph = Rectangle.GRAPH(rects);
         const [vertices, edges] = graph;
         const distances = new Map();
-        const movedRef = rects[refVertex].move(cachedBounds, proposedBounds);
+        let movedRef = rects[refVertex];
+        // let movedRef: Rectangle;c
+
+        // handle the crossed edges here..
+        if (movedRef.hasIdenticalBounds( cachedBounds)) {
+            movedRef = Rectangle.CREATE_FROM_BOUNDS(proposedBounds);
+        } else {
+            // crossed shit here?
+            movedRef = movedRef.move(cachedBounds, proposedBounds);
+        }
 
         //tslint:disable
         console.log(JSON.stringify([refVertex, visited, cachedBounds.bounds, proposedBounds.bounds]));
@@ -539,29 +552,24 @@ export class Rectangle {
         }
 
         distances.set(refVertex, 0);
-
         visited.push(refVertex);
 
         const toVisit = [refVertex];
 
         while (toVisit.length) {
             const u = toVisit.shift();
-
             const e = (<number [][]>edges).filter(([uu]): boolean => uu === u);
 
             e.forEach(([u, v]) => {
-                
                 if (!visited.includes(v)) {
-
                     if (distances.get(v) === Infinity) {
                         toVisit.push(v);
-                        distances.set(v, distances.get(u) + 1);
+                        distances.set(v, distances.get(u) + 1);  // do we need to inc in this case?
                         
                         Rectangle.PROP_MOVE(rects, v, rects[refVertex], movedRef, visited);
                         visited.push(v);
                     }
                 }
-                
             });
         }
 
