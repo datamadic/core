@@ -47,6 +47,7 @@ import {
     ERROR_BOX_TYPES,
     showErrorBox
 } from '../../common/errors';
+import { putInElasticSearch } from '../../browser/of_events';
 
 const subscriptionManager = new SubscriptionManager();
 const isWin32 = process.platform === 'win32';
@@ -395,6 +396,11 @@ Window.create = function(id, opts) {
         name,
         uuid
     };
+
+    putInElasticSearch('of_lifecycle', 'created', {
+        identity
+    });
+
     let baseOpts;
     let browserWindow;
     let webContents;
@@ -543,6 +549,9 @@ Window.create = function(id, opts) {
 
             // make sure that this uuid/name combo does not have any lingering close-requested subscriptions.
             ofEvents.removeAllListeners(closeEventString);
+            putInElasticSearch('of_lifecycle', 'closed', {
+                identity
+            });
         });
 
         browserWindow.once('will-close', () => {
@@ -576,6 +585,10 @@ Window.create = function(id, opts) {
                 reason: terminationStatus
             });
 
+            putInElasticSearch('of_lifecycle', 'crashed', {
+                identity
+            });
+
             // When the renderer crashes, remove blocking event listeners.
             // Removing 'close-requested' listeners will allow the crashed window to be closed manually easily.
             const closeRequested = route.window('close-requested', uuid, name);
@@ -605,6 +618,10 @@ Window.create = function(id, opts) {
 
         browserWindow.on('unresponsive', () => {
             emitToAppIfMainWin('not-responding');
+            putInElasticSearch('of_lifecycle', 'unresponsive', {
+                identity
+            });
+
         });
 
         let mapEvents = function(eventMap, eventEmitter) {

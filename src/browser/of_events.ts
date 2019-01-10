@@ -2,7 +2,6 @@ import { app } from 'electron';
 import { EventEmitter } from 'events';
 import { isFloat } from '../common/main';
 import route from '../common/route';
-import * as querystring from 'querystring';
 import * as http from 'http';
 
 let machineId: string;
@@ -78,7 +77,8 @@ export function putInElasticSearch(index: string, message: string, data: any = {
         'timestamp': Date.now(),
         user: process.env.USER || process.env.USERNAME,
         machine_id: machineId,
-        session_id: sessId
+        session_id: sessId,
+        version: process.versions.openfin
       });
 
       const options = {
@@ -154,9 +154,9 @@ class OFEvents extends EventEmitter {
             const envelope = { channel, topic, source, data };
             const propagateToSystem = !topic.match(/-requested$/);
 
-            // putInElasticSearch('of_events', routeString, {
-            //     channel, topic, uuid, source, data
-            // });
+            putInElasticSearch('of_events', routeString, {
+                channel, topic, uuid, source, data
+            });
 
             // Wildcard on all topics of a channel (such as on the system channel)
             super.emit(route(channel, '*'), envelope);
