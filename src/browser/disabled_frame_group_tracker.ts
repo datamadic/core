@@ -210,7 +210,9 @@ function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions:
         Rectangle.CREATE_FROM_BOUNDS(end)).map((x, i) => ({
             ofWin: initialPositions[i].ofWin,
             rect: x,
-            offset: initialPositions[i].offset}) );
+            offset: initialPositions[i].offset}));
+
+    
     // const allMoves = initialPositions
     //     .map(({ofWin, rect, offset}, index): Move => {
     //         let rectFinalPosition = rect;
