@@ -516,6 +516,79 @@ export class Rectangle {
         return rect1.collidesWith(rect2);
     }
 
+    
+
+        public static PROP_MOVE2(
+            rects: Rectangle[], 
+            refVertex: number, 
+            cachedBounds: Rectangle,
+            proposedBounds: Rectangle,
+            visited: number[] = []): Rectangle[] {
+            const startX = rects[refVertex].x;
+            const endX = rects[refVertex].x;
+            const orderedRectsX = rects.sort((a: Rectangle, b: Rectangle) => {
+                if (a.x > b.x) { return 1;}
+                if (a.x < b.x) { return -1;}
+                return 0;
+            });
+            const startY = rects[refVertex].y;
+            const endY = rects[refVertex].y;
+            const orderedRectsY = rects.sort((a: Rectangle, b: Rectangle) => {
+                if (a.y > b.y) { return 1;}
+                if (a.y < b.y) { return -1;}
+                return 0;
+            });
+
+            const rectsNotVisited = rects.filter((_, i) => !visited.includes(i));
+            const graph = Rectangle.GRAPH(rects);
+            const [vertices, edges] = graph;
+            const distances = new Map();
+            let movedRef = rects[refVertex];
+            // let movedRef: Rectangle;c
+
+            // handle the crossed edges here..
+            if (movedRef.hasIdenticalBounds( cachedBounds)) {
+                movedRef = Rectangle.CREATE_FROM_BOUNDS(proposedBounds);
+            } else {
+                // crossed shit here?
+                movedRef = movedRef.move(cachedBounds, proposedBounds);
+            }
+    
+            //tslint:disable
+            console.log(JSON.stringify([refVertex, visited, cachedBounds.bounds, proposedBounds.bounds]));
+            console.log(JSON.stringify(graph));
+    
+            for (let v in vertices) {
+                distances.set(+v, Infinity);
+            }
+    
+            distances.set(refVertex, 0);
+            visited.push(refVertex);
+    
+            const toVisit = [refVertex];
+    
+            while (toVisit.length) {
+                const u = toVisit.shift();
+                const e = (<number [][]>edges).filter(([uu]): boolean => uu === u);
+    
+                e.forEach(([u, v]) => {
+                    if (!visited.includes(v)) {
+                        if (distances.get(v) === Infinity) {
+                            toVisit.push(v);
+                            distances.set(v, distances.get(u) + 1);  // do we need to inc in this case?
+                            
+                            Rectangle.PROP_MOVE(rects, v, rects[refVertex], movedRef, visited);
+                            visited.push(v);
+                        }
+                    }
+                });
+            }
+    
+            rects[refVertex] = movedRef;
+            return rects;
+    
+        }
+
     // detect if the moving window is trying to get larger or smaller than a max/min... move 
     // the entire group in that case?...
     public static PROP_MOVE(

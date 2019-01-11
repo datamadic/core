@@ -436,7 +436,7 @@ describe('Rectangle', () => {
         ];
         //tslint:disable 
         const moved = new Rectangle(0, 0, 100, 90);
-        const propped = Rectangle.PROP_MOVE(rects, 0, rects[0], moved)
+        const propped = Rectangle.PROP_MOVE2(rects, 0, rects[0], moved)
         console.log(JSON.stringify(propped.map(x => x.bounds)));
     });
 });
