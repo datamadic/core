@@ -203,7 +203,7 @@ function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions:
     }
     const windowGraph = Rectangle.GRAPH(rectPositions);
     const distances = Rectangle.DISTANCES(windowGraph, leaderRect);
-    const allMoves = Rectangle.PROP_MOVE(
+    const allMoves = Rectangle.PROP_MOVE2(
         initialPositions.map(x => x.rect),
         leaderRect,
         Rectangle.CREATE_FROM_BOUNDS(start),
@@ -212,7 +212,6 @@ function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions:
             rect: x,
             offset: initialPositions[i].offset}));
 
-    
     // const allMoves = initialPositions
     //     .map(({ofWin, rect, offset}, index): Move => {
     //         let rectFinalPosition = rect;
@@ -262,15 +261,15 @@ function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions:
     if (!endMove) {
         return [];
     }
-    const final = endMove.rect;
-    const xChangedWithoutWidth = final.width === start.width && final.x !== start.x;
-    if (xChangedWithoutWidth) {
-        return [];
-    }
-    const yChangedWithoutHeight = final.height === start.height && final.y !== start.y;
-    if (yChangedWithoutHeight) {
-        return [];
-    }
+    // const final = endMove.rect;
+    // const xChangedWithoutWidth = final.width === start.width && final.x !== start.x;
+    // if (xChangedWithoutWidth) {
+    //     return [];
+    // }
+    // const yChangedWithoutHeight = final.height === start.height && final.y !== start.y;
+    // if (yChangedWithoutHeight) {
+    //     return [];
+    // }
     return moves;
 }
 

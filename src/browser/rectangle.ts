@@ -140,10 +140,10 @@ export class Rectangle {
         const { x, y, width, height } = rect;
         let collision = false;
 
-        if (this.x < x + width &&
-            this.x + this.width > x &&
-            this.y < y + height &&
-            this.y + this.height > y) {
+        if (this.x <= x + width &&
+            this.x + this.width >= x &&
+            this.y <= y + height &&
+            this.y + this.height >= y) {
             collision = true;
         }
 
@@ -405,7 +405,11 @@ export class Rectangle {
     }
  
     private relativePositions = (rect: Rectangle) => {
-        return Rectangle.EDGE_CROSSINGS.map(([mySide, otherSide]) => this[mySide] > rect[otherSide]);
+        return Rectangle.EDGE_CROSSINGS.map(([mySide, otherSide]) => {
+            return this[mySide] > rect[otherSide] ? 
+                1 : this[mySide] < rect[otherSide] ?
+                    -1 : 0
+        });
     }
 
     public move = (cachedBounds: RectangleBase, currentBounds: RectangleBase): Rectangle => {
@@ -524,6 +528,9 @@ export class Rectangle {
             cachedBounds: Rectangle,
             proposedBounds: Rectangle,
             visited: number[] = []): Rectangle[] {
+            
+            rects[refVertex] = proposedBounds;
+
             const startX = rects[refVertex].x;
             const endX = rects[refVertex].x;
             const orderedRectsX = rects.sort((a: Rectangle, b: Rectangle) => {
@@ -539,52 +546,98 @@ export class Rectangle {
                 return 0;
             });
 
-            const rectsNotVisited = rects.filter((_, i) => !visited.includes(i));
-            const graph = Rectangle.GRAPH(rects);
-            const [vertices, edges] = graph;
-            const distances = new Map();
-            let movedRef = rects[refVertex];
-            // let movedRef: Rectangle;c
+            let xMoveDirection;
+            if (proposedBounds.left !== cachedBounds.left) {
+                // goin' left
+                let idx = orderedRectsX.indexOf(rects[refVertex]);
+                let cBounds = cachedBounds;
+                let pBounds = proposedBounds;
 
-            // handle the crossed edges here..
-            if (movedRef.hasIdenticalBounds( cachedBounds)) {
-                movedRef = Rectangle.CREATE_FROM_BOUNDS(proposedBounds);
-            } else {
-                // crossed shit here?
-                movedRef = movedRef.move(cachedBounds, proposedBounds);
-            }
-    
-            //tslint:disable
-            console.log(JSON.stringify([refVertex, visited, cachedBounds.bounds, proposedBounds.bounds]));
-            console.log(JSON.stringify(graph));
-    
-            for (let v in vertices) {
-                distances.set(+v, Infinity);
-            }
-    
-            distances.set(refVertex, 0);
-            visited.push(refVertex);
-    
-            const toVisit = [refVertex];
-    
-            while (toVisit.length) {
-                const u = toVisit.shift();
-                const e = (<number [][]>edges).filter(([uu]): boolean => uu === u);
-    
-                e.forEach(([u, v]) => {
-                    if (!visited.includes(v)) {
-                        if (distances.get(v) === Infinity) {
-                            toVisit.push(v);
-                            distances.set(v, distances.get(u) + 1);  // do we need to inc in this case?
-                            
-                            Rectangle.PROP_MOVE(rects, v, rects[refVertex], movedRef, visited);
-                            visited.push(v);
-                        }
+                while (idx > 0) {
+                    let r = orderedRectsX[idx - 1];
+                    const newCached = Rectangle.CREATE_FROM_BOUNDS(r);
+                    const crossedEdges = r.crossedEdges(cachedBounds, proposedBounds);
+
+                    if (crossedEdges.length > 0) {
+                        r = r.alignCrossedEdges(crossedEdges, proposedBounds)
                     }
-                });
+
+                    rects[rects.indexOf(orderedRectsY[idx - 1])] = r;
+
+                    cBounds = newCached;
+                    proposedBounds = r;
+                    --idx;
+                }
+            } else if (proposedBounds.right !== cachedBounds.right) {
+                // goin' right
+                let idx = orderedRectsY.indexOf(rects[refVertex]);
+                let cBounds = cachedBounds;
+                let pBounds = proposedBounds;
+
+                while (idx < orderedRectsY.length - 1) {
+                    // let nextIdx = 
+                    let r = orderedRectsY[idx + 1];
+                    const newCached = Rectangle.CREATE_FROM_BOUNDS(r);
+                    const crossedEdges = r.crossedEdges(cachedBounds, proposedBounds);
+
+                    if (crossedEdges.length > 0) {
+                        r = r.alignCrossedEdges(crossedEdges, proposedBounds)
+                    }
+
+                    rects[rects.indexOf(orderedRectsY[idx + 1])] = r;
+
+                    cBounds = newCached;
+                    proposedBounds = r;
+                    ++idx;
+                }
             }
+
+            // const rectsNotVisited = rects.filter((_, i) => !visited.includes(i));
+            // const graph = Rectangle.GRAPH(rects);
+            // const [vertices, edges] = graph;
+            // const distances = new Map();
+            // let movedRef = rects[refVertex];
+            // // let movedRef: Rectangle;c
+
+            // // handle the crossed edges here..
+            // if (movedRef.hasIdenticalBounds( cachedBounds)) {
+            //     movedRef = Rectangle.CREATE_FROM_BOUNDS(proposedBounds);
+            // } else {
+            //     // crossed shit here?
+            //     movedRef = movedRef.move(cachedBounds, proposedBounds);
+            // }
     
-            rects[refVertex] = movedRef;
+            // //tslint:disable
+            // console.log(JSON.stringify([refVertex, visited, cachedBounds.bounds, proposedBounds.bounds]));
+            // console.log(JSON.stringify(graph));
+    
+            // for (let v in vertices) {
+            //     distances.set(+v, Infinity);
+            // }
+    
+            // distances.set(refVertex, 0);
+            // visited.push(refVertex);
+    
+            // const toVisit = [refVertex];
+    
+            // while (toVisit.length) {
+            //     const u = toVisit.shift();
+            //     const e = (<number [][]>edges).filter(([uu]): boolean => uu === u);
+    
+            //     e.forEach(([u, v]) => {
+            //         if (!visited.includes(v)) {
+            //             if (distances.get(v) === Infinity) {
+            //                 toVisit.push(v);
+            //                 distances.set(v, distances.get(u) + 1);  // do we need to inc in this case?
+                            
+            //                 Rectangle.PROP_MOVE(rects, v, rects[refVertex], movedRef, visited);
+            //                 visited.push(v);
+            //             }
+            //         }
+            //     });
+            // }
+    
+            // rects[refVertex] = movedRef;
             return rects;
     
         }

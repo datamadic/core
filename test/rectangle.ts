@@ -431,11 +431,12 @@ describe('Rectangle', () => {
     it('should propagate a move through the graph, oh my!', () => {
         const rects = [
             new Rectangle(0, 0, 100, 100),
-            new Rectangle(0, 100, 100, 100, {maxHeight: 100}),
-            new Rectangle(0, 200, 100, 100)
+            //new Rectangle(0, 100, 100, 100, {maxHeight: 100}),
+            new Rectangle(100, 0, 100, 100),
+            new Rectangle(200, 0, 100, 100)
         ];
         //tslint:disable 
-        const moved = new Rectangle(0, 0, 100, 90);
+        const moved = new Rectangle(0, 0, 90, 100);
         const propped = Rectangle.PROP_MOVE2(rects, 0, rects[0], moved)
         console.log(JSON.stringify(propped.map(x => x.bounds)));
     });
