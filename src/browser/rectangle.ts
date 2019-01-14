@@ -533,14 +533,14 @@ export class Rectangle {
 
             const startX = rects[refVertex].x;
             const endX = rects[refVertex].x;
-            const orderedRectsX = rects.sort((a: Rectangle, b: Rectangle) => {
+            const orderedRectsX = [...rects].sort((a: Rectangle, b: Rectangle) => {
                 if (a.x > b.x) { return 1;}
                 if (a.x < b.x) { return -1;}
                 return 0;
             });
             const startY = rects[refVertex].y;
             const endY = rects[refVertex].y;
-            const orderedRectsY = rects.sort((a: Rectangle, b: Rectangle) => {
+            const orderedRectsY = [...rects].sort((a: Rectangle, b: Rectangle) => {
                 if (a.y > b.y) { return 1;}
                 if (a.y < b.y) { return -1;}
                 return 0;
@@ -556,38 +556,38 @@ export class Rectangle {
                 while (idx > 0) {
                     let r = orderedRectsX[idx - 1];
                     const newCached = Rectangle.CREATE_FROM_BOUNDS(r);
-                    const crossedEdges = r.crossedEdges(cachedBounds, proposedBounds);
+                    const crossedEdges = r.crossedEdges(cBounds, pBounds); //!!!!!!
 
                     if (crossedEdges.length > 0) {
-                        r = r.alignCrossedEdges(crossedEdges, proposedBounds)
+                        r = r.alignCrossedEdges(crossedEdges, pBounds)
                     }
 
-                    rects[rects.indexOf(orderedRectsY[idx - 1])] = r;
+                    rects[rects.indexOf(orderedRectsX[idx - 1])] = r;
 
                     cBounds = newCached;
-                    proposedBounds = r;
+                    pBounds = r;
                     --idx;
                 }
             } else if (proposedBounds.right !== cachedBounds.right) {
                 // goin' right
-                let idx = orderedRectsY.indexOf(rects[refVertex]);
+                let idx = orderedRectsX.indexOf(rects[refVertex]);
                 let cBounds = cachedBounds;
                 let pBounds = proposedBounds;
 
-                while (idx < orderedRectsY.length - 1) {
+                while (idx < orderedRectsX.length - 1) {
                     // let nextIdx = 
-                    let r = orderedRectsY[idx + 1];
+                    let r = orderedRectsX[idx + 1];
                     const newCached = Rectangle.CREATE_FROM_BOUNDS(r);
-                    const crossedEdges = r.crossedEdges(cachedBounds, proposedBounds);
+                    const crossedEdges = r.crossedEdges(cBounds, pBounds);
 
                     if (crossedEdges.length > 0) {
-                        r = r.alignCrossedEdges(crossedEdges, proposedBounds)
+                        r = r.alignCrossedEdges(crossedEdges, pBounds)
                     }
 
-                    rects[rects.indexOf(orderedRectsY[idx + 1])] = r;
+                    rects[rects.indexOf(orderedRectsX[idx + 1])] = r;
 
                     cBounds = newCached;
-                    proposedBounds = r;
+                    pBounds = r;
                     ++idx;
                 }
             }
