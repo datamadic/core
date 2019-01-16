@@ -217,10 +217,10 @@ function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions:
 
     const iterator = Math.ceil(maxDelta / 10);
     const iterDelta: RectangleBase = {
-        x: delta.x / iterator,
-        y: delta.y / iterator,
-        width: delta.width / iterator,
-        height: delta.height / iterator
+        x: Math.round(delta.x / iterator),
+        y: Math.round(delta.y / iterator),
+        width: Math.round(delta.width / iterator),
+        height: Math.round(delta.height / iterator)
     };
 
     let iterEnd = iterStart.shift(iterDelta);
