@@ -534,47 +534,10 @@ export class Rectangle {
             const [refRect] = rects.splice(refVertex, 1);
 
             if (proposedBounds.left !== cachedBounds.left) {
-                const orderedRectsX = [...rects].sort((a: Rectangle, b: Rectangle) => {
-                    if (a.x > b.x) { return 1;}
-                    if (a.x < b.x) { return -1;}
-                    if (a.opts.minWidth > b.opts.minWidth) { return 1; }
-                    if (a.opts.minWidth < b.opts.minWidth) { return -1; }
-                    return 0;
-                }).filter(x => x.x <= refRect.x);
+                const orderedRectsX = [...rects].sort(rectSort('x', 'minWidth', gt)).filter(x => x.x <= refRect.x);
 
                 // let idx = orderedRectsX.indexOf(rects[refVertex]);
-                let cBounds = cachedBounds;
-                let pBounds = proposedBounds;
-
-                for (let r of orderedRectsX) {
-                    let newCached = Rectangle.CREATE_FROM_BOUNDS(r, r.opts);
-                    const crossedEdges = newCached.crossedEdges(cBounds, pBounds);
-
-                    if (crossedEdges.length > 0) {
-                        newCached = newCached.alignCrossedEdges(crossedEdges, pBounds)
-                    }
-
-                    rects[rects.indexOf(r)] = newCached;
-
-                    cBounds = newCached;
-                    pBounds = r;
-                }
-
-                // while (idx > 0) {
-                //     let r = orderedRectsX[idx - 1];
-                //     const newCached = Rectangle.CREATE_FROM_BOUNDS(r);
-                //     const crossedEdges = r.crossedEdges(cBounds, pBounds);
-
-                //     if (crossedEdges.length > 0) {
-                //         r = r.alignCrossedEdges(crossedEdges, pBounds)
-                //     }
-
-                //     rects[rects.indexOf(orderedRectsX[idx - 1])] = r;
-
-                //     cBounds = newCached;
-                //     pBounds = r;
-                //     --idx;
-                // }
+                changeThisFuckingName(cachedBounds, proposedBounds, orderedRectsX, rects);
             } else if (proposedBounds.right !== cachedBounds.right) {
                 const orderedRectsX = [...rects].sort((a: Rectangle, b: Rectangle) => {
                     if (a.right > b.right) { return 1;}
@@ -603,6 +566,7 @@ export class Rectangle {
                 }
             }
 
+            // have to leave here b/c of the reassignment from newCached above 
             const orderedRectsY = [...rects].sort((a: Rectangle, b: Rectangle) => {
                 if (a.y > b.y) { return 1;}
                 if (a.y < b.y) { return -1;}
@@ -799,6 +763,45 @@ export class Rectangle {
         return distances;
     }
 }
+
+
+function changeThisFuckingName(cachedBounds: Rectangle, proposedBounds: Rectangle, orderedRects: Rectangle[], rects: Rectangle[]) {
+    
+    for (let r of orderedRects) {
+        let newCached = Rectangle.CREATE_FROM_BOUNDS(r, r.opts);
+        const crossedEdges = newCached.crossedEdges(cachedBounds, proposedBounds);
+        if (crossedEdges.length > 0) {
+            newCached = newCached.alignCrossedEdges(crossedEdges, proposedBounds);
+        }
+        rects[rects.indexOf(r)] = newCached;
+        cachedBounds = newCached;
+        proposedBounds = r;
+    }
+}
+
+function gt (x: number, y: number) {
+    return x > y
+}
+
+function lt (x: number, y: number) {
+    return x < y
+}
+
+type NumberPropertyNames<T> = { [K in keyof T]: T[K] extends number ? K : never }[keyof T];
+type RectNumProperties = NumberPropertyNames<Rectangle>;
+type RectOptNumProperties = NumberPropertyNames<Rectangle['opts']>;
+
+function rectSort(primary: RectNumProperties, secondary: RectOptNumProperties, comparisonFn: (x:number, y:number) => boolean ) {
+    return (a: Rectangle, b: Rectangle) => {
+        if (comparisonFn(a[primary], b[primary])) { return 1; }
+        if (!comparisonFn(a[primary], b[primary])) { return -1; }
+        if (comparisonFn(a.opts[secondary], b.opts[secondary])) { return 1; }
+        if (!comparisonFn(a.opts[secondary], b.opts[secondary])) { return -1; }
+        return 0;
+    }
+}
+
+
 
 enum Side {
     top,

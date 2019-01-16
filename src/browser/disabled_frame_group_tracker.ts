@@ -190,6 +190,7 @@ function handleBoundsChanging(
 function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions: Move[]) {
     const start = startMove.rect;
     const win = startMove.ofWin;
+
     let leaderRect: number;
     const numRects = initialPositions.length;
     const rectPositions: Rectangle[] = [];
@@ -203,14 +204,74 @@ function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions:
     }
     const windowGraph = Rectangle.GRAPH(rectPositions);
     const distances = Rectangle.DISTANCES(windowGraph, leaderRect);
-    const allMoves = Rectangle.PROP_MOVE2(
-        initialPositions.map(x => x.rect),
-        leaderRect,
-        Rectangle.CREATE_FROM_BOUNDS(start),
-        Rectangle.CREATE_FROM_BOUNDS(end)).map((x, i) => ({
-            ofWin: initialPositions[i].ofWin,
-            rect: x,
-            offset: initialPositions[i].offset}));
+    const delta = start.delta(end);
+    const maxDelta = Object.keys(delta).reduce((p: number, c: keyof RectangleBase) => {
+        const diff = Math.abs(delta[c]);
+        return diff > p ? diff : p;
+    }, 0.00001);
+
+    if (maxDelta === 0) { throw new Error('fucking A'); }
+
+    let allMoves: Move[] = initialPositions;
+    let iterStart = start;
+
+    const iterator = Math.ceil(maxDelta / 10);
+    const iterDelta: RectangleBase = {
+        x: delta.x / iterator,
+        y: delta.y / iterator,
+        width: delta.width / iterator,
+        height: delta.height / iterator
+    };
+
+    let iterEnd = iterStart.shift(iterDelta);
+
+    for (let i = 0; i < iterator; i++) {
+
+        allMoves = Rectangle.PROP_MOVE(
+            allMoves.map(x => x.rect),
+            leaderRect,
+            Rectangle.CREATE_FROM_BOUNDS(iterStart),
+            Rectangle.CREATE_FROM_BOUNDS(iterEnd))
+            .map((x, i) => ({
+                ofWin: allMoves[i].ofWin,
+                rect: x,
+                offset: allMoves[i].offset}));
+        iterStart = iterEnd;
+        iterEnd = iterEnd.shift(iterDelta);
+    }
+
+
+    const moves = allMoves.filter((move, i) => initialPositions[i].rect.moved(move.rect));
+
+    const graphInitial = Rectangle.GRAPH_WITH_SIDE_DISTANCES(initialPositions.map(moveToRect));
+    const graphFinal = Rectangle.GRAPH_WITH_SIDE_DISTANCES(allMoves.map(moveToRect));
+    if (!Rectangle.SUBGRAPH_AND_CLOSER(graphInitial, graphFinal)) {
+        return [];
+    }
+    const endMove = moves.find(({ ofWin }) => ofWin === win);
+    if (!endMove) {
+        return [];
+    }
+    // const final = endMove.rect;
+    // const xChangedWithoutWidth = final.width === start.width && final.x !== start.x;
+    // if (xChangedWithoutWidth) {
+    //     return [];
+    // }
+    // const yChangedWithoutHeight = final.height === start.height && final.y !== start.y;
+    // if (yChangedWithoutHeight) {
+    //     return [];
+    // }
+    return moves;
+}
+
+    // const allMoves = Rectangle.PROP_MOVE2(
+    //     initialPositions.map(x => x.rect),
+    //     leaderRect,
+    //     Rectangle.CREATE_FROM_BOUNDS(start),
+    //     Rectangle.CREATE_FROM_BOUNDS(end)).map((x, i) => ({
+    //         ofWin: initialPositions[i].ofWin,
+    //         rect: x,
+    //         offset: initialPositions[i].offset}));
 
     // const allMoves = initialPositions
     //     .map(({ofWin, rect, offset}, index): Move => {
@@ -250,28 +311,6 @@ function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions:
 
     //         return {ofWin, rect: rectFinalPosition, offset};
     //     });
-    const moves = allMoves.filter((move, i) => initialPositions[i].rect.moved(move.rect));
-
-    const graphInitial = Rectangle.GRAPH_WITH_SIDE_DISTANCES(initialPositions.map(moveToRect));
-    const graphFinal = Rectangle.GRAPH_WITH_SIDE_DISTANCES(allMoves.map(moveToRect));
-    if (!Rectangle.SUBGRAPH_AND_CLOSER(graphInitial, graphFinal)) {
-        return [];
-    }
-    const endMove = moves.find(({ ofWin }) => ofWin === win);
-    if (!endMove) {
-        return [];
-    }
-    // const final = endMove.rect;
-    // const xChangedWithoutWidth = final.width === start.width && final.x !== start.x;
-    // if (xChangedWithoutWidth) {
-    //     return [];
-    // }
-    // const yChangedWithoutHeight = final.height === start.height && final.y !== start.y;
-    // if (yChangedWithoutHeight) {
-    //     return [];
-    // }
-    return moves;
-}
 
 function handleMoveOnly(start: Rectangle, end: RectangleBase, initialPositions: Move[]) {
     const delta = start.delta(end);
