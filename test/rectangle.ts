@@ -311,23 +311,6 @@ describe('Rectangle', () => {
         assert.deepEqual([...distances], correctDistances, 'reported distances are incorrect');
     });
 
-    it('should detect that bounds were crossed, left to right', () => {
-        const baseRect = Rectangle.CREATE_FROM_BOUNDS({ 'x': 0, 'y': 0, 'width': 100, 'height': 100 });
-        const leaderRectInitial = Rectangle.CREATE_FROM_BOUNDS({ 'x': 150, 'y': 0, 'width': 100, 'height': 100 });
-        const leaderRectFinal = Rectangle.CREATE_FROM_BOUNDS({ 'x': 50, 'y': 0, 'width': 200, 'height': 100 });
-
-        const crossedEdges = baseRect.crossedEdges(leaderRectInitial, leaderRectFinal);
-        const correctCrossedEdges = [
-            {
-                mine: 'right',
-                other: 'left',
-                distance: 50
-            }
-        ];
-
-        assert.deepStrictEqual(crossedEdges, correctCrossedEdges, 'reported bound crossing is incorrect');
-    });
-
     it('should propagate a move through the graph, oh my!', () => {
         const rects = [
             new Rectangle(0, 0, 100, 100),

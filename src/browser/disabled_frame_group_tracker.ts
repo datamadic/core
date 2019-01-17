@@ -159,9 +159,6 @@ function handleBoundsChanging(
     changeType: ChangeType
 ): Move[] {
     const initialPositions: Move[] = getInitialPositions(win);
-    //tslint:disable
-    console.log('getting...................');
-    console.log(JSON.stringify(initialPositions.map(m=>m.rect.bounds)));
     let moves: Move[];
     const startMove = moveFromOpenFinWindow(win); //Corrected
     const start = startMove.rect;
@@ -327,7 +324,7 @@ export function addWindowToGroup(win: OpenFinWindow) {
                     } catch (error) {
                         writeToLog('error', error);
                     }
-                }, 16);
+                }, 30);
                 win.browserWindow
                 .once('disabled-frame-bounds-changed', async (e: any, rawPayloadBounds: RectangleBase, changeType: ChangeType) => {
                     try {
