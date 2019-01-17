@@ -140,10 +140,10 @@ export class Rectangle {
         const { x, y, width, height } = rect;
         let collision = false;
 
-        if (this.x < x + width &&
-            this.x + this.width > x &&
-            this.y < y + height &&
-            this.y + this.height > y) {
+        if (this.x <= x + width &&
+            this.x + this.width >= x &&
+            this.y <= y + height &&
+            this.y + this.height >= y) {
             collision = true;
         }
 
@@ -270,6 +270,12 @@ export class Rectangle {
         if (y && height) {
             movedSides.add('top');
         }
+        if (y && !height) {
+            movedSides.add(otherRectSharedSide);
+        }
+        if (x && !width) {
+            movedSides.add(otherRectSharedSide);
+        }
 
         return movedSides.has(otherRectSharedSide);
     }
@@ -342,64 +348,6 @@ export class Rectangle {
 
     public shift = (delta: RectangleBase) => {
         return new Rectangle(this.x + delta.x, this.y + delta.y, this.width + delta.width, this.height + delta.height, this.opts);
-    }
-
-    public crossedEdges = (initialBounds: Rectangle, finalBounds: Rectangle): EdgeCrossings => {
-        const positionsInitial = this.relativePositions(initialBounds);
-        const positionsFinal = this.relativePositions(finalBounds);
-        const crossedBounds: SideName[][] = []
-        const currentBoundsCollide = this.collidesWith(finalBounds);
-        const resizedOutOfContainingRect = (!currentBoundsCollide && this.collidesWith(initialBounds));
-        const adjacentOnAtLeastOneSide = this.sharedBoundsOnIntersection(finalBounds).hasSharedBounds;
-
-        if (currentBoundsCollide 
-            || resizedOutOfContainingRect
-            || adjacentOnAtLeastOneSide) {
-
-            for (let i = 0; i < Rectangle.EDGE_CROSSINGS.length; i++) {
-                if (positionsInitial[i] !== positionsFinal[i]) {
-                    crossedBounds.push(Rectangle.EDGE_CROSSINGS[i])
-                }
-            }
-        }
-        
-        let xCrossing: EdgeCrossing;
-        let yCrossing: EdgeCrossing;
-
-        for (let [mine, other] of crossedBounds) {
-            const distance = Math.abs(this[mine] - finalBounds[other]);
-
-            if (mine === 'left' || mine === 'right') {
-                if (!xCrossing || distance > xCrossing.distance) {
-                    xCrossing = {mine, other, distance};
-                }
-            } else {
-                if (!yCrossing || distance > yCrossing.distance) {
-                    yCrossing = {mine, other, distance};
-                }
-            }
-        }
-
-        return [xCrossing, yCrossing].filter(x => x);
-    }
-
-    public crossedEdgesBeyondThreshold = (initialBounds: Rectangle, finalBounds: Rectangle): EdgeCrossings => {
-        const crossedEdges = this.crossedEdges(initialBounds, finalBounds);
-        return crossedEdges.filter(({distance}) => distance > Rectangle.BOUND_SHARE_THRESHOLD);
-    }
-
-    public alignCrossedEdges = (edgeCrossings: EdgeCrossings, finalOtherBounds: Rectangle) => {
-        let rect: Rectangle = this;
-
-        for (const crossing of edgeCrossings) {
-            rect = rect.alignSide(crossing.mine, finalOtherBounds, crossing.other)
-        }
-
-        return rect;
-    }
- 
-    private relativePositions = (rect: Rectangle) => {
-        return Rectangle.EDGE_CROSSINGS.map(([mySide, otherSide]) => this[mySide] > rect[otherSide]);
     }
 
     public move = (cachedBounds: RectangleBase, currentBounds: RectangleBase): Rectangle => {
@@ -508,7 +456,58 @@ export class Rectangle {
 
     public static collisionsValidator(rect1: Rectangle, rect2: Rectangle): boolean  {
         return rect1.collidesWith(rect2);
-    } 
+    }
+
+    // detect if the moving window is trying to get larger or smaller than a max/min... move 
+    // the entire group in that case?...
+    public static PROP_MOVE(
+        rects: Rectangle[], 
+        refVertex: number, 
+        cachedBounds: Rectangle, 
+        proposedBounds: Rectangle,
+        visited: number[] = []): Rectangle [] {
+    
+        const graph = Rectangle.GRAPH(rects);
+        const [vertices, edges] = graph;
+        const distances = new Map();
+        let movedRef = rects[refVertex];
+
+        if (movedRef.hasIdenticalBounds( cachedBounds)) {
+            movedRef = Rectangle.CREATE_FROM_BOUNDS(proposedBounds);
+        } else {
+            movedRef = movedRef.move(cachedBounds, proposedBounds);
+        }
+
+        for (let v in vertices) {
+            distances.set(+v, Infinity);
+        }
+
+        distances.set(refVertex, 0);
+        visited.push(refVertex);
+
+        const toVisit = [refVertex];
+
+        while (toVisit.length) {
+            const u = toVisit.shift();
+            const e = (<number [][]>edges).filter(([uu]): boolean => uu === u);
+
+            e.forEach(([u, v]) => {
+                if (!visited.includes(v)) {
+                    if (distances.get(v) === Infinity) {
+                        toVisit.push(v);
+                        distances.set(v, distances.get(u) + 1);
+                        
+                        Rectangle.PROP_MOVE(rects, v, rects[refVertex], movedRef, visited);
+                        visited.push(v);
+                    }
+                }
+            });
+        }
+
+        rects[refVertex] = movedRef;
+        return rects;
+
+    }
 
     public static GRAPH(rects: Rectangle[], validator = Rectangle.sharedBoundValidator): Graph  {
         const edges = [];

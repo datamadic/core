@@ -328,93 +328,18 @@ describe('Rectangle', () => {
         assert.deepStrictEqual(crossedEdges, correctCrossedEdges, 'reported bound crossing is incorrect');
     });
 
-    it('should detect that bounds were crossed, top to bottom', () => {
-        const baseRect = Rectangle.CREATE_FROM_BOUNDS({ 'x': 0, 'y': 0, 'width': 100, 'height': 100 });
-        const leaderRectInitial = Rectangle.CREATE_FROM_BOUNDS({ 'x': 0, 'y': 150, 'width': 100, 'height': 100 });
-        const leaderRectFinal = Rectangle.CREATE_FROM_BOUNDS({ 'x': 0, 'y': 50, 'width': 100, 'height': 200 });
-
-        const crossedEdges = baseRect.crossedEdges(leaderRectInitial, leaderRectFinal);
-        const correctCrossedEdges = [
-            {
-                mine: 'bottom',
-                other: 'top',
-                distance: 50
-            }
+    it('should propagate a move through the graph, oh my!', () => {
+        const rects = [
+            new Rectangle(0, 0, 100, 100),
+            new Rectangle(0, 100, 100, 100, {maxHeight: 100}),
+            new Rectangle(0, 200, 100, 100)
         ];
-
-        assert.deepStrictEqual(crossedEdges, correctCrossedEdges, 'reported bound crossing is incorrect');
+        //tslint:disable 
+        const moved = new Rectangle(0, 0, 100, 90);
+        const propped = Rectangle.PROP_MOVE(rects, 0, rects[0], moved)
+        console.log(JSON.stringify(propped.map(x => x.bounds)));
     });
 
-    it('should detect that bounds were crossed, right to right, inside out', () => {
-        const baseRect = Rectangle.CREATE_FROM_BOUNDS({ 'x': 0, 'y': 0, 'width': 100, 'height': 100 });
-        const leaderRectInitial = Rectangle.CREATE_FROM_BOUNDS({ 'x': 0, 'y': 0, 'width': 50, 'height': 100 });
-        const leaderRectFinal = Rectangle.CREATE_FROM_BOUNDS({ 'x': 0, 'y': 0, 'width': 150, 'height': 100 });
-
-        const crossedEdges = baseRect.crossedEdges(leaderRectInitial, leaderRectFinal);
-        const correctCrossedEdges = [
-            {
-                mine: 'right',
-                other: 'right',
-                distance: 50
-            }
-        ];
-
-        assert.deepStrictEqual(crossedEdges, correctCrossedEdges, 'reported bound crossing is incorrect');
-    });
-
-    it('should detect that bounds were crossed, top to top, inside out', () => {
-        const baseRect = Rectangle.CREATE_FROM_BOUNDS({ 'x': 0, 'y': 100, 'width': 100, 'height': 100 });
-        const leaderRectInitial = Rectangle.CREATE_FROM_BOUNDS({ 'x': 0, 'y': 150, 'width': 100, 'height': 100 });
-        const leaderRectFinal = Rectangle.CREATE_FROM_BOUNDS({ 'x': 0, 'y': 50, 'width': 100, 'height': 200 });
-
-        const crossedEdges = baseRect.crossedEdges(leaderRectInitial, leaderRectFinal);
-        const correctCrossedEdges = [
-            {
-                mine: 'top',
-                other: 'top',
-                distance: 50
-            }
-        ];
-
-        assert.deepStrictEqual(crossedEdges, correctCrossedEdges, 'reported bound crossing is incorrect');
-    });
-
-    it('should detect that bounds were not crossed if not overlapping in the end', () => {
-        const baseRect = Rectangle.CREATE_FROM_BOUNDS({ 'x': 0, 'y': 100, 'width': 100, 'height': 100 });
-        const leaderRectInitial = Rectangle.CREATE_FROM_BOUNDS({ 'x': 210, 'y': 150, 'width': 100, 'height': 100 });
-        const leaderRectFinal = Rectangle.CREATE_FROM_BOUNDS({ 'x': 210, 'y': 50, 'width': 100, 'height': 200 });
-
-        const crossedEdges = baseRect.crossedEdges(leaderRectInitial, leaderRectFinal);
-        const xCrossing: undefined = undefined;
-        const yCrossing: undefined = undefined;
-        const correctCrossedEdges: EdgeCrossings = [];
-
-        assert.deepStrictEqual(crossedEdges, correctCrossedEdges, 'reported bound crossing is incorrect');
-    });
-
-    it('should align crossed edges right to left', () => {
-        const baseRect = Rectangle.CREATE_FROM_BOUNDS({ 'x': 0, 'y': 0, 'width': 100, 'height': 100 });
-        const leaderRectInitial = Rectangle.CREATE_FROM_BOUNDS({ 'x': 150, 'y': 0, 'width': 100, 'height': 100 });
-        const leaderRectFinal = Rectangle.CREATE_FROM_BOUNDS({ 'x': 50, 'y': 0, 'width': 200, 'height': 100 });
-
-        const crossedEdges = baseRect.crossedEdges(leaderRectInitial, leaderRectFinal);
-        const newBounds = baseRect.alignCrossedEdges(crossedEdges, leaderRectFinal).bounds;
-        const correctBounds = {x: 0, y: 0, height: 100, width: 50};
-
-        assert.deepStrictEqual(newBounds, correctBounds);
-    });
-
-    it('should align crossed edges when bound right to left, jumping top to top', () => {
-        const baseRect = Rectangle.CREATE_FROM_BOUNDS({ 'x': 0, 'y': 50, 'width': 100, 'height': 100 });
-        const leaderRectInitial = Rectangle.CREATE_FROM_BOUNDS({ 'x': 101, 'y': 75, 'width': 100, 'height': 100 });
-        const leaderRectFinal = Rectangle.CREATE_FROM_BOUNDS({ 'x': 101, 'y': 0, 'width': 200, 'height': 100 });
-
-        const crossedEdges = baseRect.crossedEdges(leaderRectInitial, leaderRectFinal);
-        const newBounds = baseRect.alignCrossedEdges(crossedEdges, leaderRectFinal).bounds;
-        const correctBounds = {x: 0, y: 0, height: 150, width: 100};
-
-        assert.deepStrictEqual(newBounds, correctBounds);
-    });
 });
 
 function rectList (): Rectangle[] {

@@ -159,6 +159,9 @@ function handleBoundsChanging(
     changeType: ChangeType
 ): Move[] {
     const initialPositions: Move[] = getInitialPositions(win);
+    //tslint:disable
+    console.log('getting...................');
+    console.log(JSON.stringify(initialPositions.map(m=>m.rect.bounds)));
     let moves: Move[];
     const startMove = moveFromOpenFinWindow(win); //Corrected
     const start = startMove.rect;
@@ -191,12 +194,14 @@ function handleBoundsChanging(
             moves = [];
         } break;
     }
+
     return moves;
 }
 
 function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions: Move[], willShift: boolean = false) {
     const start = startMove.rect;
     const win = startMove.ofWin;
+
     let leaderRect: number;
     const numRects = initialPositions.length;
     const rectPositions: Rectangle[] = [];
@@ -208,53 +213,51 @@ function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions:
         }
         rectPositions.push(rect);
     }
-    const windowGraph = Rectangle.GRAPH(rectPositions);
-    const distances = Rectangle.DISTANCES(windowGraph, leaderRect);
-    const allMoves = initialPositions
-        .map(({ ofWin, rect, offset }, index): Move => {
-            let rectFinalPosition = rect;
-            const cachedBounds = Rectangle.CREATE_FROM_BOUNDS(start);
-            const currentBounds = Rectangle.CREATE_FROM_BOUNDS(end);
-            let crossedEdges = rect.crossedEdgesBeyondThreshold(cachedBounds, currentBounds);
-            const hasCrossedEdges = crossedEdges.length > 0;
-            const endRect = Rectangle.CREATE_FROM_BOUNDS(end);
-            const initiallyReachable = distances.get(index) < Infinity;
-
-
-            if (rectFinalPosition.hasIdenticalBounds(cachedBounds)) {
-                rectFinalPosition = currentBounds;
-            } else {
-
-                if (initiallyReachable) {
-                    rectFinalPosition = rect.move(start, end);
-
-                    // This is how one could detect if a bound was broken via a move "pushing" or "pulling" a
-                    // window as a result of breaking a min size constraint. Leave as a reference for now.
-                    // const brokeByMove = currentBounds.crossedEdgesBeyondThreshold(rect, rectFinalPosition);
-                    // if (brokeByMove.length > 0) {
-                    //     // handle pushed broken edges
-                    // }
-
-                    crossedEdges = rectFinalPosition.crossedEdgesBeyondThreshold(cachedBounds, currentBounds);
-
-                    if (crossedEdges.length > 0) {
-                        rectFinalPosition = rectFinalPosition.alignCrossedEdges(crossedEdges, endRect);
-                    }
-
-                } else if (hasCrossedEdges) {
-                    rectFinalPosition = rect.alignCrossedEdges(crossedEdges, endRect);
-                }
-            }
-
-            return { ofWin, rect: rectFinalPosition, offset };
-        });
-    const moves = allMoves.filter((move, i) => initialPositions[i].rect.moved(move.rect) || willShift);
 
     const graphInitial = Rectangle.GRAPH_WITH_SIDE_DISTANCES(initialPositions.map(moveToRect));
-    const graphFinal = Rectangle.GRAPH_WITH_SIDE_DISTANCES(allMoves.map(moveToRect));
-    if (!Rectangle.SUBGRAPH_AND_CLOSER(graphInitial, graphFinal)) {
-        return [];
+    const delta = start.delta(end);
+    const maxDelta = Object.keys(delta).reduce((p: number, c: keyof RectangleBase) => {
+        const diff = Math.abs(delta[c]);
+        return diff > p ? diff : p;
+    }, 0.00001);
+
+    let allMoves: Move[] = initialPositions;
+    let iterStart = start;
+
+    const iterator = Math.ceil(maxDelta / 4);
+    const iterDelta: RectangleBase = {
+        x: Math.round(delta.x / iterator),
+        y: Math.round(delta.y / iterator),
+        width: Math.round(delta.width / iterator),
+        height: Math.round(delta.height / iterator)
+    };
+
+    let iterEnd = iterStart.shift(iterDelta);
+
+    for (let i = 0; i < iterator; i++) {
+
+        const lastValidMoves = [...allMoves];
+        allMoves = Rectangle.PROP_MOVE(
+            allMoves.map(x => x.rect),
+            leaderRect,
+            Rectangle.CREATE_FROM_BOUNDS(iterStart),
+            Rectangle.CREATE_FROM_BOUNDS(iterEnd))
+            .map((x, i) => ({
+                ofWin: allMoves[i].ofWin,
+                rect: x,
+                offset: allMoves[i].offset}));
+
+        iterStart = iterEnd;
+        iterEnd = iterEnd.shift(iterDelta);
+
+        const graphFinal = Rectangle.GRAPH_WITH_SIDE_DISTANCES(allMoves.map(moveToRect));
+        if (!Rectangle.SUBGRAPH_AND_CLOSER(graphInitial, graphFinal)) {
+            allMoves = lastValidMoves;
+            break;
+        }
     }
+
+    const moves = allMoves.filter((move, i) => initialPositions[i].rect.moved(move.rect));
     const endMove = moves.find(({ ofWin }) => ofWin === win);
     if (!endMove) {
         return [];
@@ -268,6 +271,7 @@ function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions:
     if (yChangedWithoutHeight) {
         return [];
     }
+
     return moves;
 }
 
