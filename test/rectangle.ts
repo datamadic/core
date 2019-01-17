@@ -311,18 +311,100 @@ describe('Rectangle', () => {
         assert.deepEqual([...distances], correctDistances, 'reported distances are incorrect');
     });
 
-    it('should propagate a move through the graph, oh my!', () => {
-        const rects = [
-            new Rectangle(0, 0, 100, 100),
-            new Rectangle(0, 100, 100, 100, {maxHeight: 100}),
-            new Rectangle(0, 200, 100, 100)
-        ];
-        //tslint:disable 
-        const moved = new Rectangle(0, 0, 100, 90);
-        const propped = Rectangle.PROP_MOVE(rects, 0, rects[0], moved)
-        console.log(JSON.stringify(propped.map(x => x.bounds)));
+    it('should propagate a move through the window graph, center height constraint', () => {
+        const startRect = Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 0, width: 100, height: 100});
+        const endRect = Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 0, width: 100, height: 90});
+        const rectsInit = [
+            startRect,
+            Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 100, width: 100, height: 100}, {maxHeight: 100}),
+            Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 200, width: 100, height: 100})];
+        const rectsFinal = [
+            endRect,
+            Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 90, width: 100, height: 100}, {maxHeight: 100}),
+            Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 190, width: 100, height: 110})];
+
+        const delta = startRect.delta(endRect);
+
+        const propagatedMoves = Rectangle.PROPAGATE_MOVE(0, startRect, delta, rectsInit);
+        assert.deepEqual(propagatedMoves.map(x => x.bounds), rectsFinal.map(x => x.bounds));
     });
 
+    it('should propagate a move through the window graph, double center height constraint', () => {
+        const startRect = Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 0, width: 100, height: 100});
+        const endRect = Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 0, width: 100, height: 90});
+        const rectsInit = [
+            startRect,
+            Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 100, width: 100, height: 100}, {maxHeight: 100}),
+            Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 200, width: 100, height: 100}, {maxHeight: 100}),
+            Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 300, width: 100, height: 100})];
+        const rectsFinal = [
+            endRect,
+            Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 90, width: 100, height: 100}, {maxHeight: 100}),
+            Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 190, width: 100, height: 100}, {maxHeight: 100}),
+            Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 290, width: 100, height: 110})];
+
+        const delta = startRect.delta(endRect);
+
+        const propagatedMoves = Rectangle.PROPAGATE_MOVE(0, startRect, delta, rectsInit);
+        assert.deepEqual(propagatedMoves.map(x => x.bounds), rectsFinal.map(x => x.bounds));
+    });
+
+    it('should propagate a move through the window graph, no constraint', () => {
+        const startRect = Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 0, width: 100, height: 100});
+        const endRect = Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 0, width: 100, height: 90});
+        const rectsInit = [
+            startRect,
+            Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 100, width: 100, height: 100}),
+            Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 200, width: 100, height: 100})];
+        const rectsFinal = [
+            endRect,
+            Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 90, width: 100, height: 110}),
+            Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 200, width: 100, height: 100})];
+
+        const delta = startRect.delta(endRect);
+
+        const propagatedMoves = Rectangle.PROPAGATE_MOVE(0, startRect, delta, rectsInit);
+        assert.deepEqual(propagatedMoves.map(x => x.bounds), rectsFinal.map(x => x.bounds));
+    });
+
+    it('should propagate a move through the window graph, width constraint, horizontal', () => {
+        const startRect = Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 0, width: 100, height: 100});
+        const endRect = Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 0, width: 130, height: 100});
+        const rectsInit = [
+            startRect,
+            Rectangle.CREATE_FROM_BOUNDS({x: 100, y: 0, width: 100, height: 100}, {minWidth: 100}),
+            Rectangle.CREATE_FROM_BOUNDS({x: 200, y: 0, width: 100, height: 100})];
+        const rectsFinal = [
+            endRect,
+            Rectangle.CREATE_FROM_BOUNDS({x: 130, y: 0, width: 100, height: 100}),
+            Rectangle.CREATE_FROM_BOUNDS({x: 230, y: 0, width: 70, height: 100})];
+
+        const delta = startRect.delta(endRect);
+
+        const propagatedMoves = Rectangle.PROPAGATE_MOVE(0, startRect, delta, rectsInit);
+        assert.deepEqual(propagatedMoves.map(x => x.bounds), rectsFinal.map(x => x.bounds));
+    });
+
+    it('should propagate a move through the window graph, width constraint, horizontal, huge jump', () => {
+        const startRect = Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 0, width: 100, height: 100});
+        const endRect = Rectangle.CREATE_FROM_BOUNDS({x: 0, y: 0, width: 330, height: 100});
+        const rectsInit = [
+            startRect,
+            Rectangle.CREATE_FROM_BOUNDS({x: 100, y: 0, width: 100, height: 100}, {minWidth: 100}),
+            Rectangle.CREATE_FROM_BOUNDS({x: 200, y: 0, width: 100, height: 100}, {minWidth: 100})];
+        const rectsFinal = [
+            endRect,
+            Rectangle.CREATE_FROM_BOUNDS({x: 330, y: 0, width: 100, height: 100}),
+            Rectangle.CREATE_FROM_BOUNDS({x: 430, y: 0, width: 100, height: 100})];
+
+        const delta = startRect.delta(endRect);
+
+        const propagatedMoves = Rectangle.PROPAGATE_MOVE(0, startRect, delta, rectsInit);
+        assert.deepEqual(propagatedMoves.map(x => x.bounds), rectsFinal.map(x => x.bounds));
+    });
+
+    // width...
+    // big jump...
 });
 
 function rectList (): Rectangle[] {

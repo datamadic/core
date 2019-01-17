@@ -159,6 +159,7 @@ function handleBoundsChanging(
     changeType: ChangeType
 ): Move[] {
     const initialPositions: Move[] = getInitialPositions(win);
+    const leaderRectIndex = initialPositions.map(x => x.ofWin).indexOf(win);
     let moves: Move[];
     const startMove = moveFromOpenFinWindow(win); //Corrected
     const start = startMove.rect;
@@ -169,7 +170,7 @@ function handleBoundsChanging(
             moves = handleMoveOnly(start, end, initialPositions);
             break;
         case ChangeType.SIZE:
-            moves = handleResizeOnly(startMove, end, initialPositions);
+            moves = handleResizeOnly(leaderRectIndex, startMove, end, initialPositions);
             break;
         case ChangeType.POSITION_AND_SIZE:
             const delta = start.delta(end);
@@ -179,7 +180,7 @@ function handleBoundsChanging(
             const resizeDelta = {x: delta.x - xShift, y: delta.y - yShift, width: delta.width, height: delta.height};
 
             moves = (delta.width || delta.height)
-                ? handleResizeOnly(startMove, start.shift(resizeDelta), initialPositions, !!(xShift || yShift))
+                ? handleResizeOnly(leaderRectIndex, startMove, start.shift(resizeDelta), initialPositions)
                 : initialPositions;
 
             moves = (xShift || yShift)
@@ -191,68 +192,20 @@ function handleBoundsChanging(
             moves = [];
         } break;
     }
-
     return moves;
 }
 
-function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions: Move[], willShift: boolean = false) {
+function handleResizeOnly(leaderRectIndex: number, startMove: Move, end: RectangleBase, initialPositions: Move[]) {
     const start = startMove.rect;
     const win = startMove.ofWin;
-
-    let leaderRect: number;
-    const numRects = initialPositions.length;
-    const rectPositions: Rectangle[] = [];
-    for (let i = 0; i < numRects; i++) {
-        const { rect } = initialPositions[i];
-
-        if (rect.hasIdenticalBounds(start)) {
-            leaderRect = i;
-        }
-        rectPositions.push(rect);
-    }
-
-    const graphInitial = Rectangle.GRAPH_WITH_SIDE_DISTANCES(initialPositions.map(moveToRect));
     const delta = start.delta(end);
-    const maxDelta = Object.keys(delta).reduce((p: number, c: keyof RectangleBase) => {
-        const diff = Math.abs(delta[c]);
-        return diff > p ? diff : p;
-    }, 0.00001);
+    const rects = initialPositions.map(x => x.rect);
+    const iterMoves = Rectangle.PROPAGATE_MOVE(leaderRectIndex, start, delta, rects);
 
-    let allMoves: Move[] = initialPositions;
-    let iterStart = start;
-
-    const iterator = Math.ceil(maxDelta / 4);
-    const iterDelta: RectangleBase = {
-        x: Math.round(delta.x / iterator),
-        y: Math.round(delta.y / iterator),
-        width: Math.round(delta.width / iterator),
-        height: Math.round(delta.height / iterator)
-    };
-
-    let iterEnd = iterStart.shift(iterDelta);
-
-    for (let i = 0; i < iterator; i++) {
-
-        const lastValidMoves = [...allMoves];
-        allMoves = Rectangle.PROP_MOVE(
-            allMoves.map(x => x.rect),
-            leaderRect,
-            Rectangle.CREATE_FROM_BOUNDS(iterStart),
-            Rectangle.CREATE_FROM_BOUNDS(iterEnd))
-            .map((x, i) => ({
-                ofWin: allMoves[i].ofWin,
-                rect: x,
-                offset: allMoves[i].offset}));
-
-        iterStart = iterEnd;
-        iterEnd = iterEnd.shift(iterDelta);
-
-        const graphFinal = Rectangle.GRAPH_WITH_SIDE_DISTANCES(allMoves.map(moveToRect));
-        if (!Rectangle.SUBGRAPH_AND_CLOSER(graphInitial, graphFinal)) {
-            allMoves = lastValidMoves;
-            break;
-        }
-    }
+    const allMoves = iterMoves.map((x, i) => ({
+        ofWin: initialPositions[i].ofWin,
+        rect: x,
+        offset: initialPositions[i].offset}));
 
     const moves = allMoves.filter((move, i) => initialPositions[i].rect.moved(move.rect));
     const endMove = moves.find(({ ofWin }) => ofWin === win);
@@ -268,7 +221,6 @@ function handleResizeOnly(startMove: Move, end: RectangleBase, initialPositions:
     if (yChangedWithoutHeight) {
         return [];
     }
-
     return moves;
 }
 
