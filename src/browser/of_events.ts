@@ -78,7 +78,7 @@ export function putInElasticSearch(index: string, message: string, data: any = {
         user: process.env.USER || process.env.USERNAME,
         machine_id: machineId,
         session_id: sessId,
-        version: process.versions.openfin
+        version: (<any>process.versions).openfin
       });
 
       const options = {
