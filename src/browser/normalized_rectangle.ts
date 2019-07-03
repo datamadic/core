@@ -2,6 +2,7 @@ import { Rectangle, RectangleBase } from './rectangle';
 import { GroupWindow } from '../shapes';
 import { System } from './api/system';
 import { Move } from './disabled_frame_group_tracker';
+import { ExternalWindow } from 'electron';
 
 const osName: string = System.getHostSpecs().name;
 const isWin10 = /Windows 10/.test(osName);
@@ -22,8 +23,8 @@ const framedOffset: Readonly<RectangleBase> = {
 export const zeroDelta: Readonly<RectangleBase> = {x: 0, y: 0, height: 0, width: 0 };
 export function moveFromOpenFinWindow(ofWin: GroupWindow): Move {
     const win = ofWin.browserWindow;
-    const bounds = win.getBounds();
-    const delta = isWin10 && win._options.frame
+    const bounds = (<any>ExternalWindow).GetBoundsWithoutShadow(win.nativeId); //  win.getBounds();
+    const delta = isWin10 && win._options.frame && false
         ? framedOffset
         : zeroDelta;
     const normalizedOptions = {...win._options};

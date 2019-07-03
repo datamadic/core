@@ -323,7 +323,7 @@ export class Rectangle {
                     const tooSmall = changes.height < this.opts.minHeight;
                     const tooBig = changes.height > this.opts.maxHeight;
 
-                    changes.y = rect[sideToAlign];      
+                    changes.y = rect[sideToAlign];
 
                     if (tooSmall) {
                         changes.height = this.opts.minHeight;
@@ -356,7 +356,7 @@ export class Rectangle {
     }
 
     public move = (cachedBounds: RectangleBase, currentBounds: RectangleBase): Rectangle => {
-        
+
         const sharedBoundsList = this.sharedBoundsList(Rectangle.CREATE_FROM_BOUNDS(cachedBounds));
         const currLeader = Rectangle.CREATE_FROM_BOUNDS(currentBounds);
         const delta = Rectangle.CREATE_FROM_BOUNDS(cachedBounds).delta(currLeader);
@@ -434,7 +434,7 @@ export class Rectangle {
     }
 
     /**
-     * This indicates that not only is `a` a subgraph of `b` but that, if there was 
+     * This indicates that not only is `a` a subgraph of `b` but that, if there was
      * any difference in distances that they are equal or closer
      */
     public static SUBGRAPH_AND_CLOSER(a: any, b: any) {
@@ -476,14 +476,14 @@ export class Rectangle {
         }, 1);
         const iterator = Math.ceil(maxDelta / Rectangle.BOUND_SHARE_THRESHOLD);
         const iterDelta: RectangleBase = {
-            x: Math.round(delta.x / iterator),
-            y: Math.round(delta.y / iterator),
-            width: Math.round(delta.width / iterator),
-            height: Math.round(delta.height / iterator)
+            x: delta.x / iterator,
+            y: delta.y / iterator,
+            width: delta.width / iterator,
+            height: delta.height / iterator
         };
         let iterStart = start;
         let iterEnd = iterStart.shift(iterDelta);
-    
+
         for (let i = 0; i < iterator; i++) {
             const lastValidMoves = [...rects];
             rects = propMoveThroughGraph(
@@ -491,10 +491,10 @@ export class Rectangle {
                 leaderRectIndex,
                 Rectangle.CREATE_FROM_BOUNDS(iterStart),
                 Rectangle.CREATE_FROM_BOUNDS(iterEnd));
-    
+
             iterStart = iterEnd;
             iterEnd = iterEnd.shift(iterDelta);
-    
+
             const graphFinal = Rectangle.GRAPH_WITH_SIDE_DISTANCES(rects);
             if (!Rectangle.SUBGRAPH_AND_CLOSER(graphInitial, graphFinal)) {
                 rects = lastValidMoves;
@@ -502,9 +502,15 @@ export class Rectangle {
             }
         }
 
-        return rects;
+        return rects.map(r => {
+            r.x = Math.round(r.x);
+            r.y = Math.round(r.y);
+            r.width = Math.round(r.width);
+            r.height = Math.round(r.height);
+            return r;
+        });
     }
-    
+
     public static GRAPH(rects: Rectangle[], validator = Rectangle.sharedBoundValidator): Graph  {
         const edges = [];
         const vertices: Array<number> = [];
@@ -588,9 +594,9 @@ export class Rectangle {
 }
 
 function propMoveThroughGraph (
-    rects: Rectangle[], 
-    refVertex: number, 
-    cachedBounds: Rectangle, 
+    rects: Rectangle[],
+    refVertex: number,
+    cachedBounds: Rectangle,
     proposedBounds: Rectangle,
     visited: number[] = []): Rectangle [] {
 
@@ -623,7 +629,7 @@ function propMoveThroughGraph (
                 if (distances.get(v) === Infinity) {
                     toVisit.push(v);
                     distances.set(v, distances.get(u) + 1);
-                    
+
                     propMoveThroughGraph(rects, v, rects[refVertex], movedRef, visited);
                     visited.push(v);
                 }
