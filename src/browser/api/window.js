@@ -112,10 +112,15 @@ let browserWindowEventMap = {
     },
     'unmaximize': {
         topic: 'restored'
+    },
+    'will-move': {
+        topic: 'will-move',
+        decorator: willMoveOrResizeDecorator
+    },
+    'will-resize': {
+        topic: 'will-resize',
+        decorator: willMoveOrResizeDecorator
     }
-    // 'move': {
-    //     topic: 'bounds-changing'
-    // }
 };
 
 let webContentsEventMap = {
@@ -2217,6 +2222,20 @@ function disabledFrameBoundsChangeDecorator(payload, args) {
     }
 
     return propogate;
+}
+
+function willMoveOrResizeDecorator(payload, args) {
+    const { x, y, height, width } = args[1];
+    const monitorInfo = System.getMonitorInfo();
+    const monitorScaleFactor = monitorInfo.deviceScaleFactor;
+    Object.assign(payload, {
+        monitorScaleFactor,
+        left: x,
+        top: y,
+        height,
+        width
+    });
+    return true;
 }
 
 function opacityChangedDecorator(payload, args) {

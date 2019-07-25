@@ -38,7 +38,6 @@ class RectOptionsOpts {
         this.maxHeight = opts.maxHeight || Number.MAX_SAFE_INTEGER;
     }
 }
-const zeroDelta = { x: 0, y: 0, height: 0, width: 0 };
 
 export class Rectangle {
     public static CREATE_FROM_BOUNDS(rect: RectangleBase, opts?: Opts): Rectangle {
@@ -217,21 +216,23 @@ export class Rectangle {
         }).filter(x => x);
     }
 
+    public hasIdenticalBounds = (rect: RectangleBase): boolean => {
+        return this.x === rect.x &&
+            this.y === rect.y &&
+            this.width === rect.width &&
+            this.height === rect.height;
+    }
+
     public moved = (rect: RectangleBase) => {
-        return !(
-            rect.x === this.x
-            && rect.y === this.y
-            && rect.height === this.height
-            && rect.width === this.width
-        )
+        return !this.hasIdenticalBounds(rect)
     }
 
     public delta = (rect: RectangleBase): RectangleBase => {
         return {
-            x: rect.x - this.x,
-            y: rect.y - this.y,
-            width: rect.width - this.width,
-            height: rect.height - this.height
+            x: Math.round(rect.x - this.x),
+            y: Math.round(rect.y - this.y),
+            width: Math.round(rect.width - this.width),
+            height: Math.round(rect.height - this.height)
         };
     }
 
@@ -363,13 +364,6 @@ export class Rectangle {
         return Array.from(Rectangle.ADJACENCY_LIST([...rects, this as Rectangle]).values()).find(list => list.includes(this));
     }
 
-    public hasIdenticalBounds = (rect: RectangleBase): boolean => {
-        return this.x === rect.x &&
-            this.y === rect.y &&
-            this.width === rect.width &&
-            this.height === rect.height;
-    }
-
     public static ADJACENCY_LIST(rects: Rectangle[]): Map<number, Rectangle[]> {
         const adjLists = new Map();
         const rectLen = rects.length;
@@ -444,14 +438,6 @@ export class Rectangle {
         return true;
     }
 
-    public static sharedBoundValidator(rect1: Rectangle, rect2: Rectangle): boolean {
-        return rect1.sharedBoundsOnIntersection(rect2).hasSharedBounds
-    }
-
-    public static collisionsValidator(rect1: Rectangle, rect2: Rectangle): boolean  {
-        return rect1.collidesWith(rect2);
-    }
-
 
     public static PROPAGATE_MOVE(leaderRectIndex: number,
         start: Rectangle,
@@ -465,10 +451,10 @@ export class Rectangle {
         }, 1);
         const iterator = Math.ceil(maxDelta / Rectangle.BOUND_SHARE_THRESHOLD);
         const iterDelta: RectangleBase = {
-            x: Math.round(delta.x / iterator),
-            y: Math.round(delta.y / iterator),
-            width: Math.round(delta.width / iterator),
-            height: Math.round(delta.height / iterator)
+            x: delta.x / iterator,
+            y: delta.y / iterator,
+            width: delta.width / iterator,
+            height: delta.height / iterator
         };
         let iterStart = start;
         let iterEnd = iterStart.shift(iterDelta);
@@ -491,10 +477,17 @@ export class Rectangle {
             }
         }
 
-        return rects;
+        // return rects;
+        return rects.map(r => {
+            r.x = Math.round(r.x);
+            r.y = Math.round(r.y);
+            r.width = Math.round(r.width);
+            r.height = Math.round(r.height);
+            return r;
+        });
     }
     
-    public static GRAPH(rects: Rectangle[], validator = Rectangle.sharedBoundValidator): Graph  {
+    public static GRAPH(rects: Rectangle[]): Graph  {
         const edges = [];
         const vertices: Array<number> = [];
         const rectLen = rects.length;
@@ -505,7 +498,7 @@ export class Rectangle {
 
             for (let ii = 0; ii < rectLen; ii++) {
                 if (i !== ii) {
-                    if (validator(rects[i], rects[ii])) {
+                    if (rects[i].sharedBoundsOnIntersection(rects[ii]).hasSharedBounds) {
                         edges.push([i, ii]);
                     }
                 }
