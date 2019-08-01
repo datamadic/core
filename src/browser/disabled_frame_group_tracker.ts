@@ -102,20 +102,24 @@ function handleApiMove(win: GroupWindow, delta: RectangleBase) {
 
 function handleBatchedMove(moves: Move[], changeType: ChangeType, bringWinsToFront: boolean = false) {
     if (isWin32) {
-        moves.forEach(({ ofWin, rect }) => {
-            (<any>ExternalWindow).setBoundsWithoutShadow(ofWin.browserWindow.nativeId, rect);
-            if (bringWinsToFront) { ofWin.browserWindow.bringToFront(); }
-        });
-        // const { flag: { noZorder, noSize, noActivate } } = WindowTransaction;
-        // const flags = noZorder + noActivate;
-        // const wt = new WindowTransaction.Transaction(0);
         // moves.forEach(({ ofWin, rect }) => {
-        //     const hwnd = parseInt(ofWin.browserWindow.nativeId, 16);
-        //     wt.setWindowPos(hwnd, { ...getTransactionBounds(rect), flags });
-        //     // (<any>ExternalWindow).setBoundsWithoutShadow(ofWin.browserWindow.nativeId, rect);
+        //     (<any>ExternalWindow).setBoundsWithoutShadow(ofWin.browserWindow.nativeId, rect);
         //     if (bringWinsToFront) { ofWin.browserWindow.bringToFront(); }
         // });
-        // wt.commit();
+        // const { flag: { noZorder, noSize, noActivate } } = WindowTransaction;
+        //tslint:disable-next-line
+        const flags = 0x0004 + 0x0010;
+        const wt = new WindowTransaction.Transaction(0);
+        moves.forEach(({ ofWin, rect }) => {
+            const hwnd = parseInt(ofWin.browserWindow.nativeId, 16);
+            // check if w10 and such then...
+            const bds =  (<any>ExternalWindow).addShadow(ofWin.browserWindow.nativeId, rect);
+
+            (<any>wt.setWindowPos)(hwnd, { ...getTransactionBounds(bds), flags, scale: false });
+            // (<any>ExternalWindow).setBoundsWithoutShadow(ofWin.browserWindow.nativeId, rect);
+            if (bringWinsToFront) { ofWin.browserWindow.bringToFront(); }
+        });
+        wt.commit();
     } else {
         moves.forEach(({ ofWin, rect }) => {
             ofWin.browserWindow.setBounds(rect);

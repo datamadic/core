@@ -439,11 +439,11 @@ describe('Rectangle', () => {
         assert.deepEqual(propagatedMoves[0].bounds.height, startRect.height + delta.height);
     });
 
-    it.skip('should do larger moves correctly', () => {
+    it('should do larger moves correctly', () => {
         let heightChange = 0;
         const startRect = Rectangle.CREATE_FROM_BOUNDS({x: 100, y: 100, width: 100, height: 100});
 
-        while (heightChange < 50) {
+        while (heightChange < 200) {
             const endRect = Rectangle.CREATE_FROM_BOUNDS({x: 100, y: 100 - heightChange, width: 100, height: 100 + heightChange});
             const rectsInit = [
                 startRect,

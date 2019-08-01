@@ -406,7 +406,12 @@ export class Rectangle {
                             const [mySide, otherSide] = sides;
                             const key = [i, ii, Side[mySide], Side[otherSide]].toString();
                             edges.add(key)
-                            edgeDistances.set(key, Math.abs(rect[mySide] - rects[ii][otherSide]));
+                            const edgeDistRaw = Math.abs(rect[mySide] - rects[ii][otherSide]);
+                            // because fractional distances dont make sense even when iterating over fractional
+                            // positions, if the distace is less than 1 we can just assume that its 0 and not 
+                            // some small decimal value
+                            const edgeDistCorrected = Math.round(edgeDistRaw);
+                            edgeDistances.set(key, edgeDistCorrected);
                         });
                     }
                 }
