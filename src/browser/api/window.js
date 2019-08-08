@@ -10,7 +10,7 @@ let BrowserWindow = electron.BrowserWindow;
 let electronApp = electron.app;
 let Menu = electron.Menu;
 let nativeImage = electron.nativeImage;
-
+import { ExternalWindow } from 'electron';
 // npm modules
 let _ = require('underscore');
 const crypto = require('crypto');
@@ -1289,6 +1289,26 @@ Window.getBounds = function(identity) {
     return NativeWindow.getBounds(browserWindow);
 };
 
+Window.getBounds2 = function(identity) {
+    const browserWindow = getElectronBrowserWindow(identity);
+    return ExternalWindow.getBoundsWithoutShadow(browserWindow.nativeId);
+
+    /*
+        if (!browserWindow) {
+            return {
+                height: 0,
+                left: -1,
+                top: -1,
+                width: 0,
+                right: -1,
+                bottom: -1
+            };
+        }
+
+        return NativeWindow.getBounds(browserWindow);
+        */
+};
+
 
 Window.getGroup = function(identity) {
     let browserWindow = getElectronBrowserWindow(identity);
@@ -1665,6 +1685,39 @@ Window.setBounds = function(identity, left, top, width, height, callback, errorC
         errorCallback(new Error(`Proposed window bounds violate size constraints for uuid: ${identity.uuid} name: ${identity.name}`));
     }
 };
+
+Window.setBounds2 = function(identity, left, top, width, height /*, callback, errorCallback*/ ) {
+    const browserWindow = getElectronBrowserWindow(identity, 'set window bounds for');
+    // const { height, left, top, width } = bounds;
+    // const opts = { height, left, top, width };
+    if (!browserWindow) {
+        return;
+    }
+
+    ExternalWindow.setBoundsWithoutShadow(browserWindow.nativeId, {
+        x: left,
+        y: top,
+        width,
+        height
+    });
+
+    // if (!('_options' in browserWindow)) {
+    //     errorCallback(new Error(`No window options present for uuid: ${identity.uuid} name: ${identity.name}`));
+    //     return;
+    // }
+
+    // const newBoundsWithinConstraints = areNewBoundsWithinConstraints(browserWindow._options, width, height);
+
+    // if (newBoundsWithinConstraints) {
+    //     NativeWindow.setBounds(browserWindow, opts);
+    //     callback();
+    // } else {
+    //     errorCallback(new Error(`Proposed window bounds violate size constraints for uuid: ${identity.uuid} name: ${identity.name}`));
+    // }
+};
+
+
+
 
 
 Window.show = function(identity, force = false) {

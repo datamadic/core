@@ -34,6 +34,7 @@ export const windowApiMap = {
     'get-current-window-options': getCurrentWindowOptions,
     'get-all-frames': getAllFrames,
     'get-window-bounds': getWindowBounds,
+    'get-window-bounds2': getWindowBounds2,
     'get-window-group': getWindowGroup,
     'get-window-info': getWindowInfo,
     'get-window-native-id': { apiFunc: getWindowNativeId, apiPath: '.getNativeId' },
@@ -58,6 +59,7 @@ export const windowApiMap = {
     'show-window': showWindow,
     'set-foreground-window': setForegroundWindow,
     'set-window-bounds': setWindowBounds,
+    'set-window-bounds2': setWindowBounds2,
     'set-window-preload-state': setWindowPreloadState,
     'show-at-window': showAtWindow,
     'stop-flash-window': stopFlashWindow,
@@ -114,6 +116,13 @@ function stopFlashWindow(identity: Identity, message: APIMessage, ack: Acker): v
 
     Window.stopFlashing(windowIdentity);
     ack(successAck);
+}
+
+function setWindowBounds2(identity: Identity, message: APIMessage, ack: Acker, nack: Nacker): void {
+    const { payload } = message;
+    const { y: top, x: left, width, height } = payload;
+    const {uuid, name} = getTargetWindowIdentity(payload);
+    Window.setBounds2({ uuid, name }, left, top, width, height, () => ack(successAck), nack);
 }
 
 function setWindowBounds(identity: Identity, message: APIMessage, ack: Acker, nack: Nacker): void {
@@ -351,6 +360,15 @@ function getWindowBounds(identity: Identity, message: APIMessage, ack: Acker): v
     const windowIdentity = getTargetWindowIdentity(payload);
 
     dataAck.data = Window.getBounds(windowIdentity);
+    ack(dataAck);
+}
+
+function getWindowBounds2(identity: Identity, message: APIMessage, ack: Acker): void {
+    const { payload } = message;
+    const dataAck = Object.assign({}, successAck);
+    const windowIdentity = getTargetWindowIdentity(payload);
+
+    dataAck.data = Window.getBounds2(windowIdentity);
     ack(dataAck);
 }
 
