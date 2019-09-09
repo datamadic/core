@@ -17,8 +17,9 @@ import {
 } from '../../../shapes';
 import { ActionSpecMap } from '../shapes';
 import {hijackMovesForGroupedWindows} from './grouped_window_moves';
-import { argo } from '../../core_state';
+import { argo, setAppRestartingState } from '../../core_state';
 import { System } from '../../api/system';
+
 
 const successAck: APIPayloadAck = { success: true };
 
@@ -59,6 +60,7 @@ export const windowApiMap = {
     'show-menu': showMenu,
     'show-window': showWindow,
     'set-foreground-window': setForegroundWindow,
+    'set-parent': setParent,
     'set-window-bounds': setWindowBounds,
     'set-window-preload-state': setWindowPreloadState,
     'show-at-window': showAtWindow,
@@ -76,6 +78,12 @@ export function init() {
        ? hijackMovesForGroupedWindows(windowApiMap)
        : windowApiMap;
     registerActionMap(registerThis, 'Window');
+}
+
+function setParent(child: Identity, message: APIMessage) {
+    const { payload } = message;
+    const { parent } = payload;
+    return Window.setParent(child, parent);
 }
 
 function windowAuthenticate(identity: Identity, message: APIMessage, ack: Acker, nack: (error: Error) => void): void {

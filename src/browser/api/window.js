@@ -49,12 +49,21 @@ import {
 } from '../../common/errors';
 import * as NativeWindow from './native_window';
 import { WINDOWS_MESSAGE_MAP } from '../../common/windows_messages';
+import { ExternalWindow } from 'electron';
+
 
 const subscriptionManager = new SubscriptionManager();
 const isWin32 = process.platform === 'win32';
 const windowPosCacheFolder = 'winposCache';
 export const Window = {}; // jshint ignore:line
 const disabledFrameRef = new Map();
+
+Window.setParent = function(childId, parentId) {
+    const child = getElectronBrowserWindow(childId, 'set window bounds for').nativeId;
+    const parent = getElectronBrowserWindow(parentId, 'set window bounds for').nativeId;
+
+    return ExternalWindow.embedInto(child, parent);
+};
 
 let browserWindowEventMap = {
     'api-injection-disabled': {
