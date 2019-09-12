@@ -60,9 +60,14 @@ const disabledFrameRef = new Map();
 
 Window.setParent = function(childId, parentId) {
     const child = getElectronBrowserWindow(childId, 'set window bounds for').nativeId;
-    const parent = getElectronBrowserWindow(parentId, 'set window bounds for').nativeId;
 
-    return ExternalWindow.embedInto(child, parent);
+    if (parentId) {
+        const parent = getElectronBrowserWindow(parentId, 'set window bounds for').nativeId;
+        return ExternalWindow.embedInto(child, parent);
+    }
+
+    return ExternalWindow.backToDesktop(child);
+
 };
 
 let browserWindowEventMap = {
